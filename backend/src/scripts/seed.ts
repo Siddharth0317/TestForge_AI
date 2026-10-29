@@ -7,9 +7,7 @@ import { Requirement } from '../models/Requirement';
 import { TargetEnvironment } from '../models/TargetEnvironment';
 import { logger } from '../utils/logger';
 
-export async function seedDatabase(): Promise<void> {
-  await connectDatabase();
-
+export async function populateSeedData(): Promise<void> {
   logger.info('Starting database seed procedure...');
 
   // 1. Create or ensure Seed Users
@@ -153,6 +151,11 @@ export async function seedDatabase(): Promise<void> {
   logger.info('Database seeding completed successfully.');
 }
 
+export async function seedDatabase(): Promise<void> {
+  await connectDatabase();
+  await populateSeedData();
+}
+
 if (require.main === module) {
   seedDatabase()
     .then(async () => {
@@ -165,4 +168,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

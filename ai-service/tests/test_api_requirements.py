@@ -90,3 +90,4 @@ async def test_analyze_requirement_surfaces_ambiguity():
         assert len(findings) > 0
         phrases = [f["phrase"].lower() for f in findings]
         assert any(p in phrases for p in ["intuitive", "fast", "several", "asap", "should"])
+

@@ -67,3 +67,4 @@ def test_clean_requirement_has_zero_or_low_ambiguity():
     warnings = [f for f in findings if f.severity == "warning"]
     # No vague terms, no unbounded quantifiers, clear outcome
     assert len(warnings) == 0
+

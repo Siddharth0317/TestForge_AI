@@ -47,6 +47,8 @@ dist/
 build/
 .vite/
 *.tsbuildinfo
+.data/
+backend/.data/
 
 # Environment & Secrets (NEVER COMMIT)
 .env

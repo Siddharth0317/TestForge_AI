@@ -57,3 +57,4 @@ class RequirementNormalizer:
             )
 
         return original_text, normalized
+

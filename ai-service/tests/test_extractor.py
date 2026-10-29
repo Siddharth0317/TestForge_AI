@@ -106,3 +106,4 @@ def test_evidence_spans_align_with_text():
         assert span.start_char < span.end_char <= len(text)
         assert span.text.lower() in text.lower()
         assert 0.0 <= span.confidence <= 1.0
+

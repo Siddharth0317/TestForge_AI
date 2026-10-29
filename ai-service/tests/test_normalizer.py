@@ -59,3 +59,4 @@ def test_normalizer_rejects_too_long():
 def test_normalizer_rejects_non_string():
     with pytest.raises(NormalizationError, match="must be a string"):
         RequirementNormalizer.normalize(12345)  # type: ignore
+
