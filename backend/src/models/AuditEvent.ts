@@ -38,3 +38,4 @@ AuditEventSchema.index({ project_id: 1, timestamp: -1 });
 AuditEventSchema.index({ entity_id: 1, timestamp: -1 });
 
 export const AuditEvent = mongoose.model<IAuditEvent>('AuditEvent', AuditEventSchema);
+

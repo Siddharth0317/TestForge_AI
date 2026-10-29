@@ -351,3 +351,4 @@ class TestCaseValidator:
 
         full_rationale = " | ".join(rationale_parts) + f" -> Score: {score}/100 ({tier})"
         return score, full_rationale
+

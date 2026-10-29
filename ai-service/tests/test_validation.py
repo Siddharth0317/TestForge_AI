@@ -134,3 +134,4 @@ async def test_validation_api_endpoint(valid_candidate):
         assert "validation_results" in data
         assert len(data["validation_results"]) == 1
         assert data["validation_results"][0]["is_valid"] is True
+
