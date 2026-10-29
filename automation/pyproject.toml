@@ -1,0 +1,22 @@
+[project]
+name = "testforge-automation"
+version = "1.0.0"
+description = "Controlled browser automation worker for TestForge AI"
+authors = [{ name = "TestForge AI Team" }]
+requires-python = ">=3.11"
+dependencies = [
+    "selenium>=4.26.0",
+    "pydantic>=2.9.2"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.3"
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+asyncio_default_fixture_loop_scope = "function"

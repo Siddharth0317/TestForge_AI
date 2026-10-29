@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: testforge-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: testforge_ai
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - testforge-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    container_name: testforge-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      MONGODB_URI: mongodb://mongodb:27017/testforge_ai
+      AI_SERVICE_URL: http://ai-service:8000
+      FRONTEND_ORIGIN: http://localhost:5173
+      INTERNAL_SERVICE_KEY: replace-with-internal-service-secret-token
+    depends_on:
+      - mongodb
+    networks:
+      - testforge-network
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: ../infrastructure/docker/ai-service.Dockerfile
+    container_name: testforge-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      AI_SERVICE_PORT: 8000
+      AI_SERVICE_HOST: 0.0.0.0
+      INTERNAL_SERVICE_KEY: replace-with-internal-service-secret-token
+      LLM_PROVIDER: mock
+    networks:
+      - testforge-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../infrastructure/docker/frontend.Dockerfile
+    container_name: testforge-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - testforge-network
+
+networks:
+  testforge-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+

@@ -1,0 +1,29 @@
+{
+  "name": "testforge-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TestForge AI: An Intelligent NLP- and LLM-Powered Automated Test Case Generation and Execution Platform",
+  "scripts": {
+    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
+    "typecheck": "npm run typecheck --workspace=backend && npm run typecheck --workspace=frontend",
+    "test": "npm run test --workspace=backend && npm run test --workspace=frontend",
+    "test:backend": "npm run test --workspace=backend",
+    "test:frontend": "npm run test --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "keywords": [
+    "test-generation",
+    "llm",
+    "nlp",
+    "selenium",
+    "automated-testing"
+  ],
+  "author": "TestForge AI Team",
+  "license": "UNLICENSED"
+}
+

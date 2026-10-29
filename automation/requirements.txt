@@ -1,0 +1,4 @@
+selenium>=4.26.0
+pytest>=8.3.3
+pydantic>=2.9.2
+

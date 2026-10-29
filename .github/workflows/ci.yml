@@ -1,0 +1,77 @@
+name: TestForge AI CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Backend
+        run: npm run typecheck --workspace=backend
+      - name: Run Backend Tests
+        run: npm run test:backend
+
+  frontend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Frontend
+        run: npm run typecheck --workspace=frontend
+      - name: Run Frontend Tests
+        run: npm run test:frontend
+
+  ai-service-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install AI Service dependencies
+        run: |
+          cd ai-service
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run AI Service Tests
+        run: |
+          cd ai-service
+          pytest
+
+  automation-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Automation dependencies
+        run: |
+          cd automation
+          pip install -r requirements.txt
+      - name: Run Automation Safety Tests
+        run: |
+          cd automation
+          pytest tests/test_safety.py
+
