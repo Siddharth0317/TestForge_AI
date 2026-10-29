@@ -47,8 +47,12 @@ requirementsRouter.post('/projects/:projectId/requirements', requireProjectRole(
     const { original_text, source_metadata } = parseResult.data;
     let normalized_text = original_text.trim().replace(/\s+/g, ' ');
 
-    // Call AI microservice for deterministic NLP analysis
-    const analysis = await AIServiceClient.analyzeRequirement(original_text, undefined, 1);
+    // Call AI microservice for deterministic NLP analysis and ML category classification
+    const [analysis, classification] = await Promise.all([
+      AIServiceClient.analyzeRequirement(original_text, undefined, 1),
+      AIServiceClient.classifyRequirement(original_text)
+    ]);
+
     const status = analysis ? 'analyzed' : 'draft';
     if (analysis?.normalized_text) {
       normalized_text = analysis.normalized_text;
@@ -61,6 +65,12 @@ requirementsRouter.post('/projects/:projectId/requirements', requireProjectRole(
       normalized_text,
       source_metadata,
       nlp_analysis: analysis || undefined,
+      ml_classification: classification ? {
+        category: classification.category,
+        confidence: classification.confidence,
+        model_version: classification.model_version,
+        is_uncertain: classification.is_uncertain
+      } : undefined,
       status,
       created_by: new mongoose.Types.ObjectId(req.user!.userId)
     });
@@ -130,7 +140,7 @@ requirementsRouter.get('/requirements/:requirementId', async (req: Request, res:
   }
 });
 
-// Edit requirement (bumps version counter, preserves lineage, and re-runs NLP analysis)
+// Edit requirement (bumps version counter, preserves lineage, and re-runs NLP/ML analysis)
 requirementsRouter.patch('/requirements/:requirementId', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { requirementId } = req.params;
@@ -179,8 +189,12 @@ requirementsRouter.patch('/requirements/:requirementId', async (req: Request, re
     let normalized_text = original_text.trim().replace(/\s+/g, ' ');
     const nextVersion = currentReq.version + 1;
 
-    // Trigger re-analysis for new version
-    const analysis = await AIServiceClient.analyzeRequirement(original_text, currentReq._id.toString(), nextVersion);
+    // Trigger re-analysis and classification for new version
+    const [analysis, classification] = await Promise.all([
+      AIServiceClient.analyzeRequirement(original_text, currentReq._id.toString(), nextVersion),
+      AIServiceClient.classifyRequirement(original_text, currentReq._id.toString())
+    ]);
+
     if (analysis?.normalized_text) {
       normalized_text = analysis.normalized_text;
     }
@@ -192,6 +206,14 @@ requirementsRouter.patch('/requirements/:requirementId', async (req: Request, re
     }
     currentReq.version = nextVersion;
     currentReq.nlp_analysis = analysis || currentReq.nlp_analysis;
+    if (classification) {
+      currentReq.ml_classification = {
+        category: classification.category,
+        confidence: classification.confidence,
+        model_version: classification.model_version,
+        is_uncertain: classification.is_uncertain
+      };
+    }
     currentReq.status = analysis ? 'analyzed' : 'draft';
 
     await currentReq.save();
@@ -205,7 +227,7 @@ requirementsRouter.patch('/requirements/:requirementId', async (req: Request, re
   }
 });
 
-// Explicit trigger endpoint to analyze or re-analyze a requirement
+// Explicit trigger endpoint to analyze and classify a requirement
 requirementsRouter.post('/requirements/:requirementId/analyze', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { requirementId } = req.params;
@@ -236,11 +258,17 @@ requirementsRouter.post('/requirements/:requirementId/analyze', async (req: Requ
       return;
     }
 
-    const analysis = await AIServiceClient.analyzeRequirement(
-      requirement.original_text,
-      requirement._id.toString(),
-      requirement.version
-    );
+    const [analysis, classification] = await Promise.all([
+      AIServiceClient.analyzeRequirement(
+        requirement.original_text,
+        requirement._id.toString(),
+        requirement.version
+      ),
+      AIServiceClient.classifyRequirement(
+        requirement.original_text,
+        requirement._id.toString()
+      )
+    ]);
 
     if (!analysis) {
       res.status(502).json({
@@ -257,6 +285,14 @@ requirementsRouter.post('/requirements/:requirementId/analyze', async (req: Requ
 
     requirement.normalized_text = analysis.normalized_text;
     requirement.nlp_analysis = analysis;
+    if (classification) {
+      requirement.ml_classification = {
+        category: classification.category,
+        confidence: classification.confidence,
+        model_version: classification.model_version,
+        is_uncertain: classification.is_uncertain
+      };
+    }
     requirement.status = 'analyzed';
     await requirement.save();
 

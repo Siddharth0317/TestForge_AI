@@ -120,6 +120,13 @@ describe('Requirements & Environments Integration Tests', () => {
       processing_version: 'spacy-3.8-rule-v1'
     });
 
+    const classifySpy = vi.spyOn(AIServiceClient, 'classifyRequirement').mockResolvedValueOnce({
+      category: 'authentication',
+      confidence: 0.88,
+      model_version: 'v1.0.0-baseline',
+      is_uncertain: false
+    });
+
     const res = await request(app)
       .post(`/api/v1/requirements/${requirement._id}/analyze`)
       .set('Authorization', `Bearer ${userToken}`);
@@ -130,8 +137,11 @@ describe('Requirements & Environments Integration Tests', () => {
     expect(res.body.data.nlp_analysis.actors).toContain('customer');
     expect(res.body.data.nlp_analysis.constraints).toContain('15 minutes');
     expect(res.body.data.nlp_analysis.processing_version).toBe('spacy-3.8-rule-v1');
+    expect(res.body.data.ml_classification.category).toBe('authentication');
+    expect(res.body.data.ml_classification.confidence).toBe(0.88);
 
     spy.mockRestore();
+    classifySpy.mockRestore();
   });
 
   it('POST /api/v1/requirements/:requirementId/analyze returns 502 when AI service fails', async () => {

@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
-  Cpu
+  Cpu,
+  Brain
 } from 'lucide-react';
 import { ProjectItem } from '../../services/projects';
 import { requirementsService, RequirementItem } from '../../services/requirements';
@@ -253,6 +254,16 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                       <span className="flex items-center text-xs text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                         <Tag className="h-3 w-3 mr-1" />
                         {req.source_metadata.jira_key}
+                      </span>
+                    )}
+                    {req.ml_classification && (
+                      <span className="flex items-center text-xs text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded font-medium">
+                        <Brain className="h-3 w-3 mr-1 text-purple-400" />
+                        <span className="capitalize">{req.ml_classification.category.replace('_', ' ')}</span>
+                        <span className="text-[10px] text-purple-400 ml-1">({Math.round(req.ml_classification.confidence * 100)}%)</span>
+                        {req.ml_classification.is_uncertain && (
+                          <span className="ml-1 text-[10px] text-amber-400" title="Low classification certainty">⚠️</span>
+                        )}
                       </span>
                     )}
                     {hasAnalysis && ambiguityCount > 0 && (

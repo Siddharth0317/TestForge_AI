@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.security import verify_internal_key
 from app.api.v1.requirements import router as requirements_router
+from app.api.v1.classifier import router as classifier_router
 
 app = FastAPI(
     title="TestForge AI Service",
@@ -14,6 +15,7 @@ app = FastAPI(
 
 # Register API routers
 app.include_router(requirements_router)
+app.include_router(classifier_router)
 
 # CORS middleware for local development
 app.add_middleware(

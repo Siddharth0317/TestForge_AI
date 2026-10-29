@@ -1,6 +1,6 @@
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
-import { INLPAnalysis } from '../models/Requirement';
+import { INLPAnalysis, IMLClassification } from '../models/Requirement';
 
 export interface AIRequirementAnalysisResponse {
   requirement_id?: string;
@@ -28,6 +28,15 @@ export interface AIRequirementAnalysisResponse {
     confidence: number;
   }>;
   processing_version: string;
+}
+
+export interface AIClassificationResponse {
+  category: string;
+  confidence: number;
+  model_version: string;
+  is_uncertain: boolean;
+  probabilities?: Record<string, number>;
+  requirement_id?: string;
 }
 
 export class AIServiceClient {
@@ -78,5 +87,47 @@ export class AIServiceClient {
       return null;
     }
   }
-}
 
+  public static async classifyRequirement(
+    text: string,
+    requirementId?: string
+  ): Promise<AIClassificationResponse | null> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(`${this.baseUrl}/internal/v1/classifier/predict`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Service-Key': this.serviceKey
+        },
+        body: JSON.stringify({
+          text,
+          requirement_id: requirementId
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.warn(
+          { status: response.status, body: errorText },
+          'AI service rejected requirement classification request'
+        );
+        return null;
+      }
+
+      const data = (await response.json()) as AIClassificationResponse;
+      return data;
+    } catch (error: any) {
+      logger.warn(
+        { err: error.message },
+        'Failed to connect to AI service for requirement classification; skipping ML tag'
+      );
+      return null;
+    }
+  }
+}

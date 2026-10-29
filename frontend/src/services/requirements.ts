@@ -29,6 +29,13 @@ export interface INLPAnalysis {
   processing_version?: string;
 }
 
+export interface IMLClassification {
+  category: string;
+  confidence: number;
+  model_version: string;
+  is_uncertain: boolean;
+}
+
 export interface RequirementItem {
   _id: string;
   project_id: string;
@@ -42,6 +49,7 @@ export interface RequirementItem {
     document_ref?: string;
   };
   nlp_analysis?: INLPAnalysis;
+  ml_classification?: IMLClassification;
   created_at: string;
   updated_at: string;
 }

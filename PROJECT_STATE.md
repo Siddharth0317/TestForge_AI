@@ -27,13 +27,13 @@
 
 ## Current Checkpoint
 
-- **Current phase:** Phase 3 — NLP Requirement Analysis
+- **Current phase:** Phase 4 — ML Dataset and Requirement Classifier
 - **Phase status:** `AT GATE (Awaiting Owner Review)`
 - **Last verified checkpoint date:** `2026-10-29`
-- **Last completed task:** Complete Phase 3: Implemented deterministic requirement analysis pipeline in `ai-service` using spaCy (`en_core_web_sm`), normalizer, candidate linguistic extractor (actors, actions, entities, conditions, constraints, outcomes, explicit negations, evidence spans), ambiguity detector (vague terms, weak modals, unbounded quantifiers, passive voice, missing outcomes), authenticated internal endpoint `POST /internal/v1/requirements/analyze`. Wired backend to AI service with graceful fallback, updated Mongoose `Requirement` schema with `nlp_analysis`, added `POST /api/v1/requirements/:id/analyze`, and updated frontend `RequirementsView` to render extracted linguistic elements and ambiguity alerts. All 64 tests passing repository-wide.
-- **Current task:** Present Phase 3 Gate Report and Walkthrough to project owner for approval.
-- **Next task:** Phase 4 — ML Dataset and Requirement Classifier (scikit-learn requirement category classifier, dataset schema, reproducible training script, metrics).
-- **Owner approval required for:** Phase 3 Gate sign-off to proceed to Phase 4.
+- **Last completed task:** Complete Phase 4: Established 6-class requirement label taxonomy (`authentication`, `validation`, `business_logic`, `security`, `error_handling`, `data_integrity`) with curated, balanced dataset of 108 verified samples (`requirements_dataset.json` & `dataset_manifest.json`). Implemented reproducible ML training workflow (`train.py`) with stratified 70/15/15 split, deduplication leakage checks, TF-IDF + balanced Logistic Regression pipeline, and compared against DummyClassifier baseline. Measured test accuracy of 0.7059 and macro F1 of 0.7048 on held-out test split (vs. baseline 0.1765). Saved model artifacts (`model.joblib`, `model_metadata.json`, `evaluation_report.md`). Implemented inference engine (`classifier.py`) with uncertainty detection and exposed authenticated endpoint `POST /internal/v1/classifier/predict`. Wired backend orchestrator to classify requirements and updated frontend `RequirementsView` with ML category and confidence badges. All 78 tests passing monorepo-wide.
+- **Current task:** Present Phase 4 Gate Report and Walkthrough to project owner for approval.
+- **Next task:** Phase 5 — LLM Provider Integration and Structured Generation (provider adapter interface, Google Gemini / Mock provider, Pydantic test-case contracts, prompt templates, bounded retries).
+- **Owner approval required for:** Phase 4 Gate sign-off to proceed to Phase 5.
 
 ## Verification Record
 
@@ -43,25 +43,27 @@
 | 2026-10-29 | Phase 0 | Document creation in `docs/` | **PASS** | `docs/*.md` created | Architecture, contracts, models, security, evaluation plan ready. |
 | 2026-10-29 | Phase 1 | `npm run typecheck` & test suites | **PASS** | `cb753ac` commit | Clean monorepo scaffold verified. |
 | 2026-10-29 | Phase 2 | Full verification suite | **PASS** | 35 tests passing | Core backend, Mongoose persistence, application shell. |
-| 2026-10-29 | Phase 3 | `pytest` in `ai-service/` | **PASS** | 30 passed | spaCy extraction, ambiguity detection, API endpoints. |
-| 2026-10-29 | Phase 3 | `npm test --prefix backend` | **PASS** | 20 passed | Mongoose models & requirement analyze integration. |
-| 2026-10-29 | Phase 3 | `npm test --prefix frontend` | **PASS** | 10 passed | RequirementsView with NLP extraction & ambiguity states. |
-| 2026-10-29 | Phase 3 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
-| 2026-10-29 | Phase 3 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean. |
+| 2026-10-29 | Phase 3 | Full verification suite | **PASS** | 64 tests passing | spaCy NLP extraction, ambiguity detection, backend & UI. |
+| 2026-10-29 | Phase 4 | `pytest` in `ai-service/` | **PASS** | 44 passed | Classifier, ML inference, API endpoints, normalizer, spaCy. |
+| 2026-10-29 | Phase 4 | `npm test --prefix backend` | **PASS** | 20 passed | Mongoose models, auth, requirements & classifier integration. |
+| 2026-10-29 | Phase 4 | `npm test --prefix frontend` | **PASS** | 10 passed | RequirementsView with ML badges, ambiguity alerts, Projects. |
+| 2026-10-29 | Phase 4 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
+| 2026-10-29 | Phase 4 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
+| 2026-10-29 | Phase 4 | ML Model Evaluation | **PASS** | `evaluation_report.md` | Test Acc: 0.7059, Macro F1: 0.7048 vs Baseline: 0.1765. |
 
 ## Active Blockers and Risks
 
-*None currently blocking. All Phase 3 criteria are satisfied.*
+*None currently blocking. All Phase 4 criteria are satisfied.*
 
 ## Known Failing or Unrun Checks
 
 - **Failing:** None
 - **Blocked:** None
-- **Not run:** None for Phase 3.
+- **Not run:** None for Phase 4.
 - **Flaky:** None
 
 ## Handoff Instructions
 
-1. Review Phase 3 deliverables, verification evidence, and walkthrough artifact.
-2. Once the project owner signs off on Phase 3, proceed to Phase 4 following the Phase 4 prompt in `Antigravity_Prompting_Plan.md`.
+1. Review Phase 4 deliverables, evaluation report, and walkthrough artifact.
+2. Once the project owner signs off on Phase 4, proceed to Phase 5 following the Phase 5 prompt in `Antigravity_Prompting_Plan.md`.
 3. Proceed one phase at a time and stop at each phase gate.

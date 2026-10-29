@@ -77,14 +77,14 @@
 
 | Criterion | Status | Evidence path / test | Verified date / commit | Unresolved issue / next action |
 |---|---|---|---|---|
-| Label taxonomy and dataset schema documented | NOT STARTED | | | |
-| Dataset provenance and label distribution recorded | NOT STARTED | | | |
-| Train/validation/test split and leakage checks documented | NOT STARTED | | | |
-| Reproducible preprocessing/training/evaluation pipeline implemented | NOT STARTED | | | |
-| Model artifact/version metadata and inference contract implemented | NOT STARTED | | | |
-| Metrics reported only when measured on valid data | NOT STARTED | | | |
-| Model loading, invalid input, and pipeline tests run | NOT STARTED | | | |
-| Baseline/unassessed state clearly identified if valid data is unavailable | NOT STARTED | | | |
+| Label taxonomy and dataset schema documented | **PASS** | `ai-service/data/dataset_manifest.json`, `docs/data-models.md` | 2026-10-29 | 6-class taxonomy (authentication, validation, business_logic, security, error_handling, data_integrity). |
+| Dataset provenance and label distribution recorded | **PASS** | `ai-service/data/dataset_manifest.json`, `requirements_dataset.json` | 2026-10-29 | 108 verified samples (exactly 18 per class, balanced distribution). |
+| Train/validation/test split and leakage checks documented | **PASS** | `ai-service/app/ml/train.py` | 2026-10-29 | Stratified 70/15/15 split (75/16/17 samples) with random_seed=42; deduplication leakage checks. |
+| Reproducible preprocessing/training/evaluation pipeline implemented | **PASS** | `ai-service/app/ml/train.py`, `artifacts/evaluation_report.md` | 2026-10-29 | TF-IDF (1,2) + Balanced Logistic Regression; compared against DummyClassifier baseline. |
+| Model artifact/version metadata and inference contract implemented | **PASS** | `artifacts/model.joblib`, `model_metadata.json`, `app/api/v1/classifier.py` | 2026-10-29 | Exported `model.joblib`, `POST /internal/v1/classifier/predict` with confidence & probabilities. |
+| Metrics reported only when measured on valid data | **PASS** | `artifacts/evaluation_report.md` | 2026-10-29 | Measured on held-out test split: Accuracy 0.7059, Macro F1 0.7048 vs Baseline 0.1765. |
+| Model loading, invalid input, and pipeline tests run | **PASS** | `ai-service/tests/test_classifier.py` (10 passed), `test_api_classifier.py` (4 passed) | 2026-10-29 | Covers model loading, 6-class predictions, confidence scores, probability sums, uncertainty flags. |
+| Baseline/unassessed state clearly identified if valid data is unavailable | **PASS** | `app/ml/classifier.py` | 2026-10-29 | Unassessed fallback gracefully returns `category: general_requirement`, `is_uncertain: True`. |
 
 ---
 

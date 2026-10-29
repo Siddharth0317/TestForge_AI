@@ -90,6 +90,12 @@ describe('RequirementsView Component States', () => {
           ],
           processing_version: 'spacy-3.8-rule-v1'
         },
+        ml_classification: {
+          category: 'authentication',
+          confidence: 0.88,
+          model_version: 'v1.0.0-baseline',
+          is_uncertain: false
+        },
         created_at: '2026-10-29T00:00:00Z',
         updated_at: '2026-10-29T00:00:00Z'
       }
@@ -103,6 +109,8 @@ describe('RequirementsView Component States', () => {
       expect(screen.getByText('v1')).toBeInTheDocument();
       expect(screen.getByText('analyzed')).toBeInTheDocument();
       expect(screen.getByText(/2 ambiguity findings/i)).toBeInTheDocument();
+      expect(screen.getByText('authentication')).toBeInTheDocument();
+      expect(screen.getByText('(88%)')).toBeInTheDocument();
       expect(screen.getByText('The portal must be fast and intuitive.')).toBeInTheDocument();
     });
   });

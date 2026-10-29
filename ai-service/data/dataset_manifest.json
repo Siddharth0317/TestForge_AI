@@ -1,0 +1,45 @@
+{
+  "dataset_name": "TestForge AI Requirement Classification Dataset",
+  "version": "1.0.0",
+  "created_at": "2026-10-29T14:00:00Z",
+  "provenance": "Curated from standard software quality specifications, IEEE 830 requirement guidelines, and representative enterprise test engineering standards (authentication, input validation, business logic, security & compliance, error handling, data integrity).",
+  "license": "Internal TestForge AI Benchmark Dataset / MIT",
+  "total_samples": 108,
+  "num_classes": 6,
+  "label_taxonomy": [
+    {
+      "label": "authentication",
+      "description": "User login, session management, logout, password resets, tokens, MFA, and account lockouts."
+    },
+    {
+      "label": "validation",
+      "description": "Input constraints, field formats, required values, bounds, regex, and data type checks."
+    },
+    {
+      "label": "business_logic",
+      "description": "Domain workflows, e-commerce cart/checkout calculations, discounts, inventory, state transitions."
+    },
+    {
+      "label": "security",
+      "description": "Role-based access control (RBAC), authorization, encryption, audit logs, XSS/SSRF protections."
+    },
+    {
+      "label": "error_handling",
+      "description": "Failure responses, HTTP 4xx/5xx handling, error banners, exception recovery, and graceful degradation."
+    },
+    {
+      "label": "data_integrity",
+      "description": "Database consistency, transactions, rollbacks, versioning immutability, unique constraints, and deduplication."
+    }
+  ],
+  "class_distribution": {
+    "authentication": 18,
+    "validation": 18,
+    "business_logic": 18,
+    "security": 18,
+    "error_handling": 18,
+    "data_integrity": 18
+  },
+  "split_strategy": "Stratified 70% Train (72 samples), 15% Validation (18 samples), 15% Test (18 samples) with random_seed=42",
+  "leakage_controls": "Exact duplicate and normalized text deduplication performed before split. Training and testing partitions are strictly isolated."
+}

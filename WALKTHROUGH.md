@@ -1,9 +1,9 @@
-# TestForge AI — Implementation Walkthrough: Phases 0 to 3
+# TestForge AI — Implementation Walkthrough: Phases 0 to 4
 
 > **Platform:** TestForge AI (An Intelligent NLP- and LLM-Powered Automated Test Case Generation and Execution Platform)  
-> **Current Milestone:** Completed Phase 3 (Deterministic NLP Requirement Analysis & Candidate Extraction)  
-> **Next Milestone:** Phase 4 (ML Dataset and Requirement Classifier)  
-> **Status:** All Phase 0–3 gates verified with 64/64 automated tests passing (100%) and zero type errors.
+> **Current Milestone:** Completed Phase 4 (ML Dataset and Requirement Classifier)  
+> **Next Milestone:** Phase 5 (LLM Provider Integration and Structured Generation)  
+> **Status:** All Phase 0–4 gates verified with 78/78 automated tests passing (100%) and zero type errors.
 
 ---
 
@@ -137,17 +137,56 @@ Phase 3 integrates deterministic natural-language processing into the platform, 
 
 ---
 
+### Phase 4: ML Dataset and Requirement Classifier
+Phase 4 introduces a reproducible machine learning classification system to categorize software requirements into functional testing domains, computing calibrated confidence distributions and surfacing uncertainty flags.
+
+#### 1. Label Taxonomy & Dataset Provenance
+* **Functional Taxonomy (6 Classes):**
+  * `authentication`: Login, session management, multi-factor auth, logout, password policies.
+  * `validation`: Form field bounds, regex formatting, character limits, type constraints.
+  * `business_logic`: Multi-step workflows, discounts, checkout rules, state calculations.
+  * `security`: Role-based access, csrf/cors policies, token tampering, privilege checks.
+  * `error_handling`: Network timeouts, service degradations, graceful failures, recovery.
+  * `data_integrity`: Database consistency, foreign keys, concurrent updates, idempotency.
+* **Balanced Dataset:**
+  * Curated 108 verified, clean requirement samples (18 samples strictly balanced per class) in [`requirements_dataset.json`](file:///c:/Projects/TestForge_AI/ai-service/data/requirements_dataset.json).
+  * Dataset manifest and audit documentation in [`dataset_manifest.json`](file:///c:/Projects/TestForge_AI/ai-service/data/dataset_manifest.json).
+
+#### 2. Reproducible Training Pipeline & Evaluation
+* Implemented [`train.py`](file:///c:/Projects/TestForge_AI/ai-service/app/ml/train.py):
+  * **Stratified Split:** 70% Train (75 samples), 15% Validation (16 samples), 15% Held-Out Test (17 samples) using fixed `random_state=42`.
+  * **Preprocessing:** Pipeline preprocessed using [`RequirementNormalizer`](file:///c:/Projects/TestForge_AI/ai-service/app/nlp/normalizer.py) ensuring identical normalization across training and production inference.
+  * **Feature Extraction & Estimator:** `TfidfVectorizer(ngram_range=(1, 2), max_features=1000)` coupled with balanced `LogisticRegression(C=2.0, max_iter=1000)`.
+  * **Baseline Model:** Evaluated against `DummyClassifier(strategy="stratified", random_state=42)`.
+* **Measured Evaluation Results on Held-Out Test Set:**
+  * **Trained Classifier:** Accuracy: **0.7059** | Macro F1: **0.7048** | Weighted F1: **0.7070**
+  * **Dummy Baseline:** Accuracy: **0.1765** | Macro F1: **0.0500** | Weighted F1: **0.1765**
+  * Artifacts saved: [`model.joblib`](file:///c:/Projects/TestForge_AI/ai-service/app/ml/artifacts/model.joblib), [`model_metadata.json`](file:///c:/Projects/TestForge_AI/ai-service/app/ml/artifacts/model_metadata.json), and [`evaluation_report.md`](file:///c:/Projects/TestForge_AI/ai-service/app/ml/artifacts/evaluation_report.md).
+
+#### 3. Inference Service & Uncertainty Detection
+* Implemented [`RequirementClassifierService`](file:///c:/Projects/TestForge_AI/ai-service/app/ml/classifier.py):
+  * Computes normalized probability distribution across all 6 classes.
+  * Surfaces `is_uncertain: true` when top class confidence falls below 0.20 or top-2 probability margin is less than 0.05.
+  * Fallback handling for unassessed models.
+* Internal API route [`classifier.py`](file:///c:/Projects/TestForge_AI/ai-service/app/api/v1/classifier.py): `POST /internal/v1/classifier/predict`.
+
+#### 4. Full-Stack Integration
+* **Backend:** Added `AIServiceClient.classifyRequirement` in [`aiService.ts`](file:///c:/Projects/TestForge_AI/backend/src/services/aiService.ts), invoked automatically upon requirement creation, update, and analysis.
+* **Frontend:** Added `Brain` icon badge to [`RequirementsView.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/features/requirements/RequirementsView.tsx) displaying predicted category, confidence percentage, and an amber alert indicator when predictions are marked uncertain.
+
+---
+
 ## 3. Verification & Test Evidence
 
-All 64 tests across the four project components are passing:
+All 78 tests across the four project components are passing (100% pass rate):
 
 | Component | Test Runner | Test Files | Total Tests | Status | Passing | Failing |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **AI Service (FastAPI & spaCy)** | Pytest | 5 | 30 | **PASS** | **30** | 0 |
+| **AI Service (NLP & ML)** | Pytest | 7 | 44 | **PASS** | **44** | 0 |
 | **Backend API & Persistence** | Vitest + Supertest | 4 | 20 | **PASS** | **20** | 0 |
 | **Frontend UI Components** | Vitest + Testing Library | 3 | 10 | **PASS** | **10** | 0 |
 | **Automation Worker Safety** | Pytest | 1 | 4 | **PASS** | **4** | 0 |
-| **Monorepo Total** | | **13** | **64** | **PASS** | **64 (100%)** | **0** |
+| **Monorepo Total** | | **15** | **78** | **PASS** | **78 (100%)** | **0** |
 
 ### TypeScript Compilation Status
 * `backend`: `tsc --noEmit` $\to$ **0 errors**.
@@ -159,11 +198,11 @@ All 64 tests across the four project components are passing:
 
 ### 1. Run All Automated Test Suites
 ```powershell
-# 1. AI Service Tests (spaCy NLP, Normalizer, Ambiguity, Internal API)
+# 1. AI Service Tests (spaCy NLP, Normalizer, Ambiguity, ML Classifier, APIs)
 cd c:\Projects\TestForge_AI
 .\ai-service\.venv\Scripts\pytest -c ai-service/pyproject.toml ai-service/tests
 
-# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements)
+# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements, AI Client)
 cd c:\Projects\TestForge_AI\backend
 npm test
 
@@ -191,14 +230,15 @@ cd c:\Projects\TestForge_AI\frontend
 npm run dev
 ```
 
-Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open the **Requirement Studio**, and inspect the extracted linguistic candidates and ambiguity alerts.
+Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open the **Requirement Studio**, and inspect the extracted linguistic candidates, ML categorization badge, and ambiguity alerts.
 
 ---
 
-## 5. Next Phase Preview: Phase 4
+## 5. Next Phase Preview: Phase 5
 
-With Phase 3 verified, the platform is ready for **Phase 4 (ML Dataset and Requirement Classifier)**:
-* **Requirement Label Taxonomy:** Functional classification categories (`authentication`, `validation`, `business_logic`, `security`, `error_handling`, `data_integrity`).
-* **Reproducible ML Pipeline:** TF-IDF vectorization with Logistic Regression / LinearSVC classifier via scikit-learn.
-* **Class Balance & Leakage Prevention:** Stratified train/validation/test split with deterministic random seeds.
-* **Inference Endpoint:** `POST /internal/v1/classifier/predict` providing category prediction, confidence scoring, and uncertainty flags.
+With Phase 4 verified, the platform moves to **Phase 5 (LLM Provider Integration and Structured Generation)**:
+* **Provider-Independent Interface:** `LLMProviderAdapter` supporting pluggable providers (Google Gemini, OpenAI, Claude, Mock).
+* **Server-Side API Key & Secrets:** Validated environment configuration without exposing credentials to client bundles.
+* **Structured Generation Contract:** JSON Schema / Pydantic models for test-case generation matching `Spec.md` Section 7.1 (`positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`).
+* **Generation Jobs & Lifecycle:** Generation job transitions (`queued`, `processing`, `completed`, `failed`), timeouts, token limits, and bounded retries.
+* **Mock Provider & Fallbacks:** Deterministic mocked provider for tests, graceful error handling for quota/rate limits/refusals.
