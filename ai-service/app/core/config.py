@@ -8,9 +8,13 @@ class Settings(BaseSettings):
     AI_LOG_LEVEL: str = Field(default="INFO")
     INTERNAL_SERVICE_KEY: str = Field(default="replace-with-internal-service-secret-token")
     LLM_PROVIDER: str = Field(default="mock")
-    LLM_MODEL: str = Field(default="gemini-1.5-pro")
+    LLM_MODEL: str = Field(default="gemini-2.5-flash")
     GEMINI_API_KEY: str = Field(default="")
     OPENAI_API_KEY: str = Field(default="")
+    LLM_TIMEOUT_SECONDS: int = Field(default=30)
+    LLM_MAX_RETRIES: int = Field(default=2)
+    LLM_TEMPERATURE: float = Field(default=0.2)
+    LLM_MAX_OUTPUT_TOKENS: int = Field(default=4096)
 
     model_config = SettingsConfigDict(
         env_file=os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.env")),

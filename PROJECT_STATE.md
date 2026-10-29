@@ -27,13 +27,13 @@
 
 ## Current Checkpoint
 
-- **Current phase:** Phase 4 — ML Dataset and Requirement Classifier
+- **Current phase:** Phase 5 — LLM Provider Integration and Structured Generation
 - **Phase status:** `AT GATE (Awaiting Owner Review)`
 - **Last verified checkpoint date:** `2026-10-29`
-- **Last completed task:** Complete Phase 4: Established 6-class requirement label taxonomy (`authentication`, `validation`, `business_logic`, `security`, `error_handling`, `data_integrity`) with curated, balanced dataset of 108 verified samples (`requirements_dataset.json` & `dataset_manifest.json`). Implemented reproducible ML training workflow (`train.py`) with stratified 70/15/15 split, deduplication leakage checks, TF-IDF + balanced Logistic Regression pipeline, and compared against DummyClassifier baseline. Measured test accuracy of 0.7059 and macro F1 of 0.7048 on held-out test split (vs. baseline 0.1765). Saved model artifacts (`model.joblib`, `model_metadata.json`, `evaluation_report.md`). Implemented inference engine (`classifier.py`) with uncertainty detection and exposed authenticated endpoint `POST /internal/v1/classifier/predict`. Wired backend orchestrator to classify requirements and updated frontend `RequirementsView` with ML category and confidence badges. All 78 tests passing monorepo-wide.
-- **Current task:** Present Phase 4 Gate Report and Walkthrough to project owner for approval.
-- **Next task:** Phase 5 — LLM Provider Integration and Structured Generation (provider adapter interface, Google Gemini / Mock provider, Pydantic test-case contracts, prompt templates, bounded retries).
-- **Owner approval required for:** Phase 4 Gate sign-off to proceed to Phase 5.
+- **Last completed task:** Complete Phase 5: Implemented provider-agnostic LLM interface (`LLMProvider`) with normalized exception hierarchy and standard token accounting. Implemented Google Gemini provider (`GeminiLLMProvider`) utilizing the official `google-genai` SDK and deterministic offline test provider (`MockLLMProvider`). Defined strict Pydantic schemas for candidate test cases conforming to Spec Section 7.1 across 6 scenario archetypes (`positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`). Authored versioned prompt templates (`PROMPT_TEMPLATE_V1`) incorporating requirement context and deterministic NLP extractions. Built generation orchestrator (`TestCaseGenerator`) enforcing timeouts, bounded retries (exponential backoff for 429/timeout), and JSON sanitization. Exposed internal endpoint `POST /internal/v1/test-cases/generate` with internal key auth. Created Mongoose `GenerationJob` model with compound indexes. Implemented backend REST endpoints in `generation.router.ts` (`POST /generate`, `GET /generation-jobs`). Enhanced frontend `RequirementsView` with interactive "Generate Cases" action and structured Candidate Test Case display showing scenario badges, step sequences, expected results, and unsupported assumption alerts. All 100 tests passing across the monorepo (100% pass rate).
+- **Current task:** Present Phase 5 Gate Report and Walkthrough to project owner for approval.
+- **Next task:** Phase 6 — Validation, Traceability, Review, and Versioning (deterministic schema checks, test case reviews, approve/reject workflow, revision history).
+- **Owner approval required for:** Phase 5 Gate sign-off to proceed to Phase 6.
 
 ## Verification Record
 
@@ -44,16 +44,17 @@
 | 2026-10-29 | Phase 1 | `npm run typecheck` & test suites | **PASS** | `cb753ac` commit | Clean monorepo scaffold verified. |
 | 2026-10-29 | Phase 2 | Full verification suite | **PASS** | 35 tests passing | Core backend, Mongoose persistence, application shell. |
 | 2026-10-29 | Phase 3 | Full verification suite | **PASS** | 64 tests passing | spaCy NLP extraction, ambiguity detection, backend & UI. |
-| 2026-10-29 | Phase 4 | `pytest` in `ai-service/` | **PASS** | 44 passed | Classifier, ML inference, API endpoints, normalizer, spaCy. |
-| 2026-10-29 | Phase 4 | `npm test --prefix backend` | **PASS** | 20 passed | Mongoose models, auth, requirements & classifier integration. |
-| 2026-10-29 | Phase 4 | `npm test --prefix frontend` | **PASS** | 10 passed | RequirementsView with ML badges, ambiguity alerts, Projects. |
-| 2026-10-29 | Phase 4 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
-| 2026-10-29 | Phase 4 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
-| 2026-10-29 | Phase 4 | ML Model Evaluation | **PASS** | `evaluation_report.md` | Test Acc: 0.7059, Macro F1: 0.7048 vs Baseline: 0.1765. |
+| 2026-10-29 | Phase 4 | Full verification suite | **PASS** | 78 tests passing | ML dataset, TF-IDF + Logistic Regression, confidence scoring. |
+| 2026-10-29 | Phase 5 | `pytest` in `ai-service/` | **PASS** | 60 passed | LLM providers, mock simulation, generator retries, internal API. |
+| 2026-10-29 | Phase 5 | `npm test --prefix backend` | **PASS** | 25 passed | GenerationJob persistence, auth, role enforcement, error handling. |
+| 2026-10-29 | Phase 5 | `npm test --prefix frontend` | **PASS** | 11 passed | RequirementsView with candidate test case cards & assumptions. |
+| 2026-10-29 | Phase 5 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
+| 2026-10-29 | Phase 5 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
+| 2026-10-29 | Phase 5 | Live REST API invocation | **PASS** | PowerShell `Invoke-RestMethod` | Successfully generated 3 candidate cases via `POST /internal/v1/test-cases/generate`. |
 
 ## Active Blockers and Risks
 
-*None currently blocking. All Phase 4 criteria are satisfied.*
+*None currently blocking. All Phase 5 criteria are satisfied.*
 
 ## Known Failing or Unrun Checks
 

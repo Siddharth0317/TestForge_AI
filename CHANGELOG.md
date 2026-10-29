@@ -6,6 +6,39 @@ All notable, owner-approved product requirement and implementation changes are r
 
 ## Change History
 
+### 2026-10-29 — Phase 5 LLM Provider Integration and Structured Generation Complete
+
+- **Change ID:** `CHG-006`
+- **Type:** `AI Microservice & Core Backend LLM Integration`
+- **Requested by:** Project Owner
+- **Approval:** `APPROVED`
+- **Reason:** Implement Phase 5 deliverables per `Spec.md` Section 7, Section 8, Section 10, Section 17, and `Antigravity_Prompting_Plan.md`.
+- **Previous behavior/requirement:** Natural-language requirements processed through deterministic NLP and ML classification only; test cases were not generated (Phase 4).
+- **New behavior/requirement:**
+  - Implemented provider-agnostic interface (`LLMProvider`) with normalized exception hierarchy (`LLMProviderError`, `LLMTimeoutError`, `LLMRateLimitError`, `LLMAuthenticationError`, `LLMRefusalError`, `LLMMalformedOutputError`) and standard token usage reporting.
+  - Implemented `GeminiLLMProvider` using official `google-genai` SDK with JSON schema enforcement, rate-limit recovery, and server-side secret management.
+  - Implemented `MockLLMProvider` for offline development, CI, and test execution with configurable simulation modes (success, timeout, rate limit, auth error, refusal, malformed JSON, empty).
+  - Defined strict Pydantic schemas for candidate test cases conforming to `Spec.md` Section 7.1 across 6 scenario archetypes (`positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`).
+  - Authored versioned prompt templates (`PROMPT_TEMPLATE_V1` = "1.0.0") incorporating requirement text, extracted NLP candidates, and predicted ML category.
+  - Implemented `TestCaseGenerator` orchestrating bounded retries (exponential backoff for transient 429/timeout), timeouts, JSON fence sanitization, and Pydantic validation.
+  - Exposed internal endpoint `POST /internal/v1/test-cases/generate` requiring `X-Internal-Service-Key`.
+  - Added Mongoose model `GenerationJob` with compound indexes (`{ project_id: 1, requirement_id: 1, created_at: -1 }`).
+  - Created backend REST routes in `generation.router.ts`: `POST /api/v1/projects/:projectId/requirements/:requirementId/generate` and `GET /api/v1/projects/:projectId/requirements/:requirementId/generation-jobs`.
+  - Enhanced frontend `RequirementsView` with interactive "Generate Cases" action and Candidate Test Cases view displaying scenario badges, step sequences, expected results, and unsupported assumption alerts.
+- **Spec.md sections updated:** Section 7.1, Section 8.4, Section 10.1, Section 17 (Phase 5).
+- **Decision IDs:** `DEC-002`, `DEC-003`
+- **Affected phase(s):** Phase 5 (completed at gate), ready for Phase 6.
+- **Verification:**
+  - `ai-service` tests: 60/60 passing with pytest (16 new LLM provider, mock, generator, and API tests).
+  - `backend` integration tests: 25/25 passing with Vitest (5 new GenerationJob & API tests).
+  - `frontend` component tests: 11/11 passing with Vitest (1 new generation flow test).
+  - `automation` safety tests: 4/4 passing with pytest.
+  - Total test suite: 100/100 passing monorepo-wide (100% pass rate).
+  - TypeScript compilation: 0 errors (`tsc --noEmit` on backend, `npm run build` on frontend).
+  - Live REST API invocation: verified via PowerShell `Invoke-RestMethod` returning 3 structured candidates.
+
+---
+
 ### 2026-10-29 — Phase 4 ML Requirement Classifier & Dataset Pipeline Complete
 
 - **Change ID:** `CHG-005`

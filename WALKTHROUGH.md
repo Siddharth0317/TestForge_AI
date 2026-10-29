@@ -1,9 +1,9 @@
-# TestForge AI — Implementation Walkthrough: Phases 0 to 4
+# TestForge AI — Implementation Walkthrough: Phases 0 to 5
 
 > **Platform:** TestForge AI (An Intelligent NLP- and LLM-Powered Automated Test Case Generation and Execution Platform)  
-> **Current Milestone:** Completed Phase 4 (ML Dataset and Requirement Classifier)  
-> **Next Milestone:** Phase 5 (LLM Provider Integration and Structured Generation)  
-> **Status:** All Phase 0–4 gates verified with 78/78 automated tests passing (100%) and zero type errors.
+> **Current Milestone:** Completed Phase 5 (LLM Provider Integration and Structured Generation)  
+> **Next Milestone:** Phase 6 (Validation, Traceability, Review, and Versioning)  
+> **Status:** All Phase 0–5 gates verified with 100/100 automated tests passing (100%) and zero type errors.
 
 ---
 
@@ -176,17 +176,54 @@ Phase 4 introduces a reproducible machine learning classification system to cate
 
 ---
 
+### Phase 5: LLM Provider Integration and Structured Generation
+Phase 5 establishes reliable, structured candidate test case generation via an external LLM API without generating arbitrary executable code.
+
+#### 1. Provider-Agnostic Interface & Implementations
+* **Abstract Base Class [`LLMProvider`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/provider.py):** Standardized interface defining `generate()` with custom typed exceptions (`LLMTimeoutError`, `LLMRateLimitError`, `LLMAuthenticationError`, `LLMRefusalError`, `LLMMalformedOutputError`) and standard token usage reporting.
+* **Google Gemini Adapter [`GeminiLLMProvider`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/gemini_provider.py):** Uses official `google-genai` SDK with `GenerateContentConfig(response_mime_type="application/json")`, temperature controls, server-side secret management, and rate-limit recovery.
+* **Deterministic Mock Provider [`MockLLMProvider`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/mock_provider.py):** Provides deterministic, offline test case generation for unit/integration tests with configurable simulation modes (`success`, `timeout`, `rate_limit`, `auth_error`, `refusal`, `malformed_json`, `empty`). Explicitly labeled as `mock`.
+
+#### 2. Candidate Test-Case Contract & Versioned Prompts
+* **Pydantic Schemas [`schemas.py`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/schemas.py):** Conforms strictly to `Spec.md` Section 7.1:
+  * 6 supported scenario types: `positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`.
+  * Allowlisted browser actions: `navigate`, `click`, `enter_text`, `select_option`, `wait_for_visible`, `assert_text`, `assert_visible`, `assert_url`.
+  * Preconditions, test data references, step sequences, expected results, priority, and source evidence spans.
+  * **Unsupported Assumptions:** Explicit `assumptions` array surfacing unstated model hypotheses for human review.
+* **Versioned Prompt Templates [`prompts.py`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/prompts.py):** `PROMPT_TEMPLATE_V1` ("1.0.0") injecting requirement text, version, extracted spaCy linguistic entities, and predicted ML category.
+
+#### 3. Generation Orchestration & Reliability
+* Implemented [`TestCaseGenerator`](file:///c:/Projects/TestForge_AI/ai-service/app/llm/generator.py):
+  * **Bounded Retries:** Automatic exponential backoff for retryable errors (HTTP 429 rate limit or timeouts) bounded by `LLM_MAX_RETRIES=2`.
+  * **Safe Output Parsing:** Strips markdown code blocks, parses JSON, and validates candidate schemas against Pydantic models.
+* Internal Endpoint [`generation.py`](file:///c:/Projects/TestForge_AI/ai-service/app/api/v1/generation.py): `POST /internal/v1/test-cases/generate` protected by `X-Internal-Service-Key`.
+
+#### 4. Backend Orchestration & Data Models
+* **Mongoose Model [`GenerationJob.ts`](file:///c:/Projects/TestForge_AI/backend/src/models/GenerationJob.ts):** Records `project_id`, `requirement_id`, `requirement_version`, `status` (`queued`, `processing`, `completed`, `failed`), `provider`, `model_name`, `prompt_template_version`, `duration_ms`, `token_usage`, `candidates`, `error_code`, `error_summary`.
+* **REST Endpoints [`generation.router.ts`](file:///c:/Projects/TestForge_AI/backend/src/modules/generation/generation.router.ts):**
+  * `POST /api/v1/projects/:projectId/requirements/:requirementId/generate` (Role: `qa_engineer`, `admin`)
+  * `GET /api/v1/projects/:projectId/requirements/:requirementId/generation-jobs` (Role: `viewer`, `qa_engineer`, `admin`)
+
+#### 5. Frontend Interactive Candidate Explorer
+* Enhanced [`RequirementsView.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/features/requirements/RequirementsView.tsx):
+  * Interactive **"Generate Cases"** button with loading spinner.
+  * **Candidate Cards View:** Displays Scenario Type badge, Priority, Title, Preconditions, Ordered Steps, and Expected Result.
+  * **Assumption Callout Banner:** Amber alert highlighting any unstated model assumptions requiring user review.
+  * **Mock Mode Indicator:** Prominently identifies when generation was performed in Mock Mode for offline development.
+
+---
+
 ## 3. Verification & Test Evidence
 
-All 78 tests across the four project components are passing (100% pass rate):
+All 100 tests across the monorepo pass cleanly (100% pass rate):
 
 | Component | Test Runner | Test Files | Total Tests | Status | Passing | Failing |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **AI Service (NLP & ML)** | Pytest | 7 | 44 | **PASS** | **44** | 0 |
-| **Backend API & Persistence** | Vitest + Supertest | 4 | 20 | **PASS** | **20** | 0 |
-| **Frontend UI Components** | Vitest + Testing Library | 3 | 10 | **PASS** | **10** | 0 |
+| **AI Service (NLP, ML, LLM)** | Pytest | 10 | 60 | **PASS** | **60** | 0 |
+| **Backend API & Persistence** | Vitest + Supertest | 5 | 25 | **PASS** | **25** | 0 |
+| **Frontend UI Components** | Vitest + Testing Library | 3 | 11 | **PASS** | **11** | 0 |
 | **Automation Worker Safety** | Pytest | 1 | 4 | **PASS** | **4** | 0 |
-| **Monorepo Total** | | **15** | **78** | **PASS** | **78 (100%)** | **0** |
+| **Monorepo Total** | | **19** | **100** | **PASS** | **100 (100%)** | **0** |
 
 ### TypeScript Compilation Status
 * `backend`: `tsc --noEmit` $\to$ **0 errors**.
@@ -198,11 +235,11 @@ All 78 tests across the four project components are passing (100% pass rate):
 
 ### 1. Run All Automated Test Suites
 ```powershell
-# 1. AI Service Tests (spaCy NLP, Normalizer, Ambiguity, ML Classifier, APIs)
+# 1. AI Service Tests (spaCy NLP, ML Classifier, LLM Providers, Generator, APIs)
 cd c:\Projects\TestForge_AI
 .\ai-service\.venv\Scripts\pytest -c ai-service/pyproject.toml ai-service/tests
 
-# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements, AI Client)
+# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements, Generation)
 cd c:\Projects\TestForge_AI\backend
 npm test
 
@@ -219,7 +256,7 @@ $env:PYTHONPATH="automation"; .\ai-service\.venv\Scripts\python.exe -m pytest au
 ```powershell
 # Terminal 1: AI Service (Port 8000)
 cd c:\Projects\TestForge_AI\ai-service
-.\.venv\Scripts\uvicorn app.main:app --port 8000
+.\.venv\Scripts\uvicorn app.main:app --port 8000 --reload
 
 # Terminal 2: Backend API (Port 4000)
 cd c:\Projects\TestForge_AI\backend
@@ -230,15 +267,14 @@ cd c:\Projects\TestForge_AI\frontend
 npm run dev
 ```
 
-Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open the **Requirement Studio**, and inspect the extracted linguistic candidates, ML categorization badge, and ambiguity alerts.
+Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open the **Requirement Studio**, and click **"Generate Cases"** on any requirement to inspect the generated candidates, action sequences, and assumption alerts.
 
 ---
 
-## 5. Next Phase Preview: Phase 5
+## 5. Next Phase Preview: Phase 6
 
-With Phase 4 verified, the platform moves to **Phase 5 (LLM Provider Integration and Structured Generation)**:
-* **Provider-Independent Interface:** `LLMProviderAdapter` supporting pluggable providers (Google Gemini, OpenAI, Claude, Mock).
-* **Server-Side API Key & Secrets:** Validated environment configuration without exposing credentials to client bundles.
-* **Structured Generation Contract:** JSON Schema / Pydantic models for test-case generation matching `Spec.md` Section 7.1 (`positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`).
-* **Generation Jobs & Lifecycle:** Generation job transitions (`queued`, `processing`, `completed`, `failed`), timeouts, token limits, and bounded retries.
-* **Mock Provider & Fallbacks:** Deterministic mocked provider for tests, graceful error handling for quota/rate limits/refusals.
+With Phase 5 verified, the platform moves to **Phase 6 (Validation, Traceability, Review, and Versioning)**:
+* **Deterministic Schema & Business-Rule Validation:** Validates required fields, step action allowlist, locator format, and assertion completeness.
+* **Traceability & Versioning:** Enforces strict requirement-to-test lineage, version bumps on case modification, and audit log events.
+* **Review Lifecycle:** Human review actions (`approve`, `reject`, `needs_changes`).
+* **Test Case Explorer UI:** Full review, editing, and approval workflow studio.

@@ -13,10 +13,15 @@ import {
   ChevronDown,
   ChevronUp,
   Cpu,
-  Brain
+  Brain,
+  Wand2,
+  ListOrdered,
+  Layers,
+  HelpCircle
 } from 'lucide-react';
 import { ProjectItem } from '../../services/projects';
 import { requirementsService, RequirementItem } from '../../services/requirements';
+import { generationService, IGenerationJob, ICandidateTestCase } from '../../services/generation';
 
 interface RequirementsViewProps {
   project: ProjectItem;
@@ -42,12 +47,29 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [expandedNlpId, setExpandedNlpId] = useState<string | null>(null);
 
+  // Generation jobs state
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [expandedCandidatesId, setExpandedCandidatesId] = useState<string | null>(null);
+  const [generationJobs, setGenerationJobs] = useState<Record<string, IGenerationJob>>({});
+
   const fetchRequirements = async () => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
       const data = await requirementsService.listRequirements(project._id);
       setRequirements(data);
+
+      // Load latest generation jobs for each requirement
+      for (const req of data) {
+        try {
+          const jobs = await generationService.getGenerationJobs(project._id, req._id);
+          if (jobs.length > 0) {
+            setGenerationJobs((prev) => ({ ...prev, [req._id]: jobs[0] }));
+          }
+        } catch {
+          // Non-blocking for list view
+        }
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to load project requirements.');
     } finally {
@@ -118,8 +140,46 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
     }
   };
 
+  const handleGenerateTestCases = async (req: RequirementItem) => {
+    setGeneratingId(req._id);
+    try {
+      const job = await generationService.generateTestCases(project._id, req._id, {
+        max_cases: 4
+      });
+      setGenerationJobs((prev) => ({ ...prev, [req._id]: job }));
+      setExpandedCandidatesId(req._id);
+    } catch (err: any) {
+      alert(`Generation failed: ${err.message}`);
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
   const toggleNlpExpand = (id: string) => {
     setExpandedNlpId(expandedNlpId === id ? null : id);
+  };
+
+  const toggleCandidatesExpand = (id: string) => {
+    setExpandedCandidatesId(expandedCandidatesId === id ? null : id);
+  };
+
+  const getScenarioBadgeClass = (scenario: string) => {
+    switch (scenario) {
+      case 'positive':
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'negative':
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      case 'boundary':
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      case 'authorization':
+        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      case 'error_handling':
+        return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+      case 'state_transition':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      default:
+        return 'bg-slate-800 text-slate-300 border-slate-700';
+    }
   };
 
   return (
@@ -131,7 +191,7 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
         </div>
         <h2 className="text-xl font-bold text-white tracking-tight">Requirement Studio</h2>
         <p className="text-sm text-slate-400">
-          Submit natural-language software specifications for deterministic spaCy linguistic extraction and quality checks
+          Submit natural-language software specifications for deterministic spaCy NLP extraction, ML categorization, and structured LLM candidate test case generation.
         </p>
       </div>
 
@@ -229,7 +289,10 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
           {requirements.map((req) => {
             const hasAnalysis = Boolean(req.nlp_analysis && req.status === 'analyzed');
             const ambiguityCount = req.nlp_analysis?.ambiguity_findings?.length || 0;
-            const isExpanded = expandedNlpId === req._id;
+            const isNlpExpanded = expandedNlpId === req._id;
+            const latestJob = generationJobs[req._id];
+            const candidateCount = latestJob?.candidates?.length || 0;
+            const isCandidatesExpanded = expandedCandidatesId === req._id;
 
             return (
               <div
@@ -272,9 +335,39 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                         {ambiguityCount} {ambiguityCount === 1 ? 'ambiguity finding' : 'ambiguity findings'}
                       </span>
                     )}
+                    {latestJob && (
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded font-medium flex items-center space-x-1 border ${
+                          latestJob.status === 'completed'
+                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                        }`}
+                      >
+                        <Layers className="h-3 w-3" />
+                        <span>{candidateCount} Generated Cases</span>
+                        {latestJob.provider === 'mock' && (
+                          <span className="text-[10px] bg-slate-800 px-1 rounded text-slate-300 ml-1">Mock</span>
+                        )}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center space-x-2">
+                    {/* Generate Test Cases Button */}
+                    <button
+                      onClick={() => handleGenerateTestCases(req)}
+                      disabled={generatingId === req._id}
+                      className="text-xs text-emerald-300 hover:text-white flex items-center space-x-1 px-2.5 py-1 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800/60 disabled:opacity-50 transition"
+                      title="Generate candidate test cases using structured LLM"
+                    >
+                      {generatingId === req._id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3 w-3 text-emerald-400" />
+                      )}
+                      <span>{generatingId === req._id ? 'Generating...' : 'Generate Cases'}</span>
+                    </button>
+
                     {req.status === 'draft' && (
                       <button
                         onClick={() => handleAnalyzeRequirement(req._id)}
@@ -345,12 +438,11 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                         <Cpu className="h-3.5 w-3.5 text-indigo-400" />
                         <span>spaCy Linguistic Extractions & Quality Findings</span>
                       </div>
-                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      {isNlpExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     </button>
 
-                    {isExpanded && (
+                    {isNlpExpanded && (
                       <div className="mt-2.5 space-y-3 bg-slate-950/70 p-3.5 rounded-lg border border-slate-800/80 text-xs">
-                        {/* Extracted Linguistic Entities */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                           {req.nlp_analysis.actors?.length > 0 && (
                             <div>
@@ -431,7 +523,6 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                           </div>
                         )}
 
-                        {/* Ambiguity Warnings */}
                         {req.nlp_analysis.ambiguity_findings?.length > 0 && (
                           <div className="pt-2 border-t border-slate-800">
                             <span className="text-amber-400 font-semibold flex items-center space-x-1 mb-1.5">
@@ -453,9 +544,123 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                        <div className="text-[10px] text-slate-500 pt-1">
-                          Processed by: <span className="font-mono text-slate-400">{req.nlp_analysis.processing_version || 'spacy-3.8-rule-v1'}</span>
+                {/* Candidate Test Cases Accordion */}
+                {latestJob && latestJob.candidates?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-slate-800/80">
+                    <button
+                      onClick={() => toggleCandidatesExpand(req._id)}
+                      className="w-full flex items-center justify-between text-xs text-emerald-400 hover:text-emerald-300 font-medium py-1"
+                    >
+                      <div className="flex items-center space-x-1.5">
+                        <Wand2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>Candidate Test Cases ({latestJob.candidates.length})</span>
+                        {latestJob.provider === 'mock' && (
+                          <span className="text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.2 rounded">
+                            Mock Provider (Offline/Testing)
+                          </span>
+                        )}
+                      </div>
+                      {isCandidatesExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    </button>
+
+                    {isCandidatesExpanded && (
+                      <div className="mt-2.5 space-y-3">
+                        {latestJob.provider === 'mock' && (
+                          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs text-amber-300 flex items-center space-x-2">
+                            <HelpCircle className="h-4 w-4 shrink-0 text-amber-400" />
+                            <span>
+                              <strong>Mock Generation Mode:</strong> Test cases were generated using the deterministic mock provider. Provider credentials remain secure and server-side.
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="space-y-2.5">
+                          {latestJob.candidates.map((tc: ICandidateTestCase, idx: number) => (
+                            <div
+                              key={tc.test_case_id || idx}
+                              className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 text-xs space-y-2 hover:border-slate-700 transition"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <span className={`px-2 py-0.5 rounded uppercase font-semibold text-[10px] border ${getScenarioBadgeClass(tc.scenario_type)}`}>
+                                    {tc.scenario_type}
+                                  </span>
+                                  <span className="font-semibold text-white text-xs">{tc.title}</span>
+                                </div>
+                                <div className="flex items-center space-x-2 text-[11px] text-slate-400">
+                                  <span className="capitalize px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded">
+                                    Priority: <strong className="text-white">{tc.priority}</strong>
+                                  </span>
+                                  <span className="font-mono text-slate-500">{tc.test_case_id}</span>
+                                </div>
+                              </div>
+
+                              {tc.preconditions?.length > 0 && (
+                                <div className="text-slate-400">
+                                  <span className="font-semibold text-slate-300">Preconditions: </span>
+                                  <span>{tc.preconditions.join('; ')}</span>
+                                </div>
+                              )}
+
+                              {/* Test Steps */}
+                              <div className="space-y-1 pt-1">
+                                <span className="font-semibold text-slate-300 flex items-center space-x-1">
+                                  <ListOrdered className="h-3 w-3 text-indigo-400" />
+                                  <span>Execution Steps ({tc.steps.length}):</span>
+                                </span>
+                                <div className="space-y-1 bg-slate-900/60 p-2 rounded border border-slate-850">
+                                  {tc.steps.map((st) => (
+                                    <div key={st.step_number} className="flex items-center space-x-2 text-[11px]">
+                                      <span className="text-slate-500 font-mono w-4">{st.step_number}.</span>
+                                      <span className="bg-slate-800 text-indigo-300 px-1.5 py-0.2 rounded font-mono font-medium">
+                                        {st.action}
+                                      </span>
+                                      <span className="text-slate-300 font-mono">{st.target_ref}</span>
+                                      {st.value_ref && (
+                                        <span className="text-emerald-300 font-mono">"{st.value_ref}"</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Expected Result */}
+                              <div className="pt-1">
+                                <span className="font-semibold text-slate-300">Expected Result: </span>
+                                <span className="text-emerald-300">{tc.expected_result}</span>
+                              </div>
+
+                              {/* Unsupported Assumptions Callout */}
+                              {tc.assumptions?.length > 0 && (
+                                <div className="p-2 bg-amber-500/5 border border-amber-500/20 rounded text-amber-300 text-[11px] space-y-1">
+                                  <span className="font-semibold flex items-center space-x-1 text-amber-400">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    <span>Unsupported Model Assumptions (Review Required):</span>
+                                  </span>
+                                  <ul className="list-disc list-inside space-y-0.5 text-slate-300">
+                                    {tc.assumptions.map((asm, aIdx) => (
+                                      <li key={aIdx}>{asm}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {/* Evidence Span Traceability */}
+                              {tc.source_evidence?.length > 0 && (
+                                <div className="text-[11px] text-slate-500 pt-1">
+                                  <span>Evidence Span: </span>
+                                  <span className="italic text-slate-400">
+                                    "{tc.source_evidence[0].requirement_span}"
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

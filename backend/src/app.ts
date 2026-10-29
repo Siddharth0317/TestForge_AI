@@ -11,6 +11,7 @@ import { authRouter } from './modules/auth/auth.router';
 import { projectsRouter } from './modules/projects/projects.router';
 import { requirementsRouter } from './modules/requirements/requirements.router';
 import { environmentsRouter } from './modules/environments/environments.router';
+import { generationRouter } from './modules/generation/generation.router';
 
 export function createApp(): Express {
   const app: Express = express();
@@ -80,6 +81,7 @@ export function createApp(): Express {
   app.use('/api/v1/projects', projectsRouter);
   app.use('/api/v1', requirementsRouter);
   app.use('/api/v1', environmentsRouter);
+  app.use('/api/v1', generationRouter);
 
   // 404 handler for unknown routes
   app.use((req: Request, res: Response) => {

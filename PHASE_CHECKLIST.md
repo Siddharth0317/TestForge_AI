@@ -92,14 +92,14 @@
 
 | Criterion | Status | Evidence path / test | Verified date / commit | Unresolved issue / next action |
 |---|---|---|---|---|
-| Provider adapter follows approved contract | NOT STARTED | | | |
-| Structured candidate generation implemented | NOT STARTED | | | |
-| Secrets remain server-side and are redacted from logs | NOT STARTED | | | |
-| Timeouts, output limits, and bounded retry policy implemented | NOT STARTED | | | |
-| Malformed output and provider failure states handled | NOT STARTED | | | |
-| Mock mode explicitly identified and not misrepresented as real calls | NOT STARTED | | | |
-| Generation configuration/model/provider metadata recorded appropriately | NOT STARTED | | | |
-| Provider adapter and schema tests pass | NOT STARTED | | | |
+| Provider adapter follows approved contract | **PASS** | `ai-service/app/llm/provider.py`, `mock_provider.py`, `gemini_provider.py` | 2026-10-29 | Abstract base `LLMProvider` with standardized `generate()`, typed responses, and normalized exception hierarchy. |
+| Structured candidate generation implemented | **PASS** | `ai-service/app/llm/schemas.py`, `generator.py`, `prompts.py` | 2026-10-29 | Generates 6 scenario types (positive, negative, boundary, authorization, error_handling, state_transition) conforming to Spec 7.1. |
+| Secrets remain server-side and are redacted from logs | **PASS** | `ai-service/app/core/config.py`, `.env` | 2026-10-29 | `GEMINI_API_KEY` validated server-side only; never leaked to frontend or embedded in candidate test cases. |
+| Timeouts, output limits, and bounded retry policy implemented | **PASS** | `ai-service/app/llm/generator.py` | 2026-10-29 | Exponential backoff for retryable errors (429/timeout) bounded by `LLM_MAX_RETRIES=2`; 30s timeout enforcement. |
+| Malformed output and provider failure states handled | **PASS** | `ai-service/tests/test_generator.py`, `backend/tests/generation.test.ts` | 2026-10-29 | Handles malformed JSON, refusals, empty candidate arrays, and 502 service outages gracefully without crashing. |
+| Mock mode explicitly identified and not misrepresented as real calls | **PASS** | `mock_provider.py`, `generation.router.ts`, `RequirementsView.tsx` | 2026-10-29 | Explicitly tagged `provider: 'mock'`; frontend renders clear "Mock Provider (Offline/Testing)" badge and alert banner. |
+| Generation configuration/model/provider metadata recorded appropriately | **PASS** | `backend/src/models/GenerationJob.ts` | 2026-10-29 | Persists `provider`, `model_name`, `prompt_template_version`, `schema_version`, `duration_ms`, `token_usage`, `candidates`. |
+| Provider adapter and schema tests pass | **PASS** | `ai-service/tests/test_llm_providers.py`, `test_generator.py`, `test_api_generation.py`, `backend/tests/generation.test.ts` | 2026-10-29 | 16 new AI service tests (60/60 passing), 5 new backend integration tests (25/25 passing), 1 new frontend test (11/11 passing). |
 
 ---
 
