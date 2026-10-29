@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: TestForge AI Core API
+  version: 1.0.0
+  description: Authoritative REST API for TestForge AI - automated test case generation and execution platform.
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Local Development Server
+
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      token: { type: string }
+                      user:
+                        type: object
+                        properties:
+                          id: { type: string }
+                          email: { type: string }
+                          role: { type: string, enum: [admin, qa_engineer, viewer] }
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/me:
+    get:
+      summary: Retrieve current authenticated user profile
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile details
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /projects:
+    post:
+      summary: Create a new test project
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 120
+                description:
+                  type: string
+                  maxLength: 1000
+                settings:
+                  type: object
+                  properties:
+                    default_priority:
+                      type: string
+                      enum: [low, medium, high, critical]
+                    require_approval_for_execution:
+                      type: boolean
+      responses:
+        '201':
+          description: Project created successfully
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    get:
+      summary: List accessible projects
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of projects
+
+  /projects/{projectId}:
+    get:
+      summary: Retrieve project details with summary metrics
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Project details
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    patch:
+      summary: Update project settings
+      tags: [Projects]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Updated project
+
+  /projects/{projectId}/requirements:
+    post:
+      summary: Create and register a requirement
+      tags: [Requirements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [original_text]
+              properties:
+                original_text:
+                  type: string
+                  minLength: 5
+                  maxLength: 4000
+                source_metadata:
+                  type: object
+                  properties:
+                    jira_key: { type: string }
+                    author: { type: string }
+      responses:
+        '201':
+          description: Requirement created with version 1
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    get:
+      summary: List requirements for a project
+      tags: [Requirements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Array of requirements
+
+  /requirements/{requirementId}:
+    get:
+      summary: Get single requirement by ID
+      tags: [Requirements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requirementId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Requirement detail
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    patch:
+      summary: Edit requirement and increment version counter
+      tags: [Requirements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requirementId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [original_text]
+              properties:
+                original_text:
+                  type: string
+                  minLength: 5
+                  maxLength: 4000
+      responses:
+        '200':
+          description: Updated requirement with incremented version counter
+
+  /projects/{projectId}/environments:
+    post:
+      summary: Configure a target environment and locators
+      tags: [Environments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, base_url, allowed_hosts]
+              properties:
+                name: { type: string }
+                base_url: { type: string, format: uri }
+                allowed_hosts:
+                  type: array
+                  items: { type: string }
+                environment_type:
+                  type: string
+                  enum: [local, dev, staging, production_authorized]
+                locators:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, page, strategy, value]
+                    properties:
+                      key: { type: string }
+                      page: { type: string }
+                      strategy: { type: string, enum: [id, css, xpath, name, test_id] }
+                      value: { type: string }
+      responses:
+        '201':
+          description: Environment configured successfully
+
+    get:
+      summary: List environments for a project
+      tags: [Environments]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Array of target environments
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ValidationError:
+      description: Request body failed validation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    UnauthorizedError:
+      description: Authentication failed or token missing
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ForbiddenError:
+      description: Insufficient project or platform permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            request_id: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+            timestamp: { type: string, format: date-time }

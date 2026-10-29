@@ -3,13 +3,14 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/LoginForm';
 import { ProjectsView } from '../features/projects/ProjectsView';
 import { RequirementsView } from '../features/requirements/RequirementsView';
+import { EnvironmentsView } from '../features/environments/EnvironmentsView';
 import { ProjectItem } from '../services/projects';
-import { Layers, LogOut, User, Folder, FileText, ChevronRight } from 'lucide-react';
+import { Layers, LogOut, User, Folder, FileText, Globe, ChevronRight } from 'lucide-react';
 
 const MainShell: React.FC = () => {
   const { user, logout } = useAuth();
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
-  const [currentTab, setCurrentTab] = useState<'projects' | 'requirements'>('projects');
+  const [currentTab, setCurrentTab] = useState<'projects' | 'requirements' | 'environments'>('projects');
 
   const handleSelectProject = (project: ProjectItem) => {
     setSelectedProject(project);
@@ -74,9 +75,21 @@ const MainShell: React.FC = () => {
                 >
                   <FileText className="h-4 w-4" />
                   <span>Requirement Studio</span>
-                  <span className="text-xs bg-indigo-950 px-1.5 py-0.2 rounded text-indigo-300 ml-1">
+                  <span className="text-xs bg-indigo-950 px-1.5 py-0.5 rounded text-indigo-300 ml-1">
                     {selectedProject.name}
                   </span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentTab('environments')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
+                    currentTab === 'environments'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <Globe className="h-4 w-4" />
+                  <span>Environments & Locators</span>
                 </button>
               </>
             )}
@@ -115,12 +128,16 @@ const MainShell: React.FC = () => {
           <RequirementsView project={selectedProject} />
         )}
 
-        {currentTab === 'requirements' && !selectedProject && (
+        {currentTab === 'environments' && selectedProject && (
+          <EnvironmentsView project={selectedProject} />
+        )}
+
+        {(currentTab === 'requirements' || currentTab === 'environments') && !selectedProject && (
           <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl">
             <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-white">No Project Selected</h3>
             <p className="text-sm text-slate-400 mt-1 mb-4">
-              Please select or create a project first to open Requirement Studio.
+              Please select or create a project first to open this workspace.
             </p>
             <button
               onClick={() => setCurrentTab('projects')}
