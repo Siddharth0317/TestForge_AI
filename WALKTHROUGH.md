@@ -204,12 +204,16 @@ Phase 5 establishes reliable, structured candidate test case generation via an e
   * `POST /api/v1/projects/:projectId/requirements/:requirementId/generate` (Role: `qa_engineer`, `admin`)
   * `GET /api/v1/projects/:projectId/requirements/:requirementId/generation-jobs` (Role: `viewer`, `qa_engineer`, `admin`)
 
-#### 5. Frontend Interactive Candidate Explorer
+#### 5. Frontend Interactive Candidate Explorer & Reliability Guard
 * Enhanced [`RequirementsView.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/features/requirements/RequirementsView.tsx):
   * Interactive **"Generate Cases"** button with loading spinner.
   * **Candidate Cards View:** Displays Scenario Type badge, Priority, Title, Preconditions, Ordered Steps, and Expected Result.
   * **Assumption Callout Banner:** Amber alert highlighting any unstated model assumptions requiring user review.
   * **Mock Mode Indicator:** Prominently identifies when generation was performed in Mock Mode for offline development.
+  * **Defensive Rendering:** Safe handling of optional or legacy ML classification tags and nested candidate structures.
+* Created [`ErrorBoundary.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/components/ErrorBoundary.tsx):
+  * Top-level error boundary wrapping workspace views in `App.tsx`.
+  * Catches unexpected React rendering exceptions, displaying error diagnostics with retry and reload controls to permanently eliminate blank screens.
 
 ---
 

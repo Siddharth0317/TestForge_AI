@@ -51,6 +51,7 @@
 | 2026-10-29 | Phase 5 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
 | 2026-10-29 | Phase 5 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
 | 2026-10-29 | Phase 5 | Live REST API invocation | **PASS** | PowerShell `Invoke-RestMethod` | Successfully generated 3 candidate cases via `POST /internal/v1/test-cases/generate`. |
+| 2026-10-29 | Phase 5 | Defect fix: RequirementsView blank screen | **PASS** | `fc1d9cb` commit | Added ErrorBoundary shell and safe fallback rendering for ML tags & candidates. |
 
 ## Active Blockers and Risks
 
@@ -60,11 +61,11 @@
 
 - **Failing:** None
 - **Blocked:** None
-- **Not run:** None for Phase 4.
+- **Not run:** None for Phase 5.
 - **Flaky:** None
 
 ## Handoff Instructions
 
-1. Review Phase 4 deliverables, evaluation report, and walkthrough artifact.
-2. Once the project owner signs off on Phase 4, proceed to Phase 5 following the Phase 5 prompt in `Antigravity_Prompting_Plan.md`.
+1. Review Phase 5 deliverables, candidate test case generation, and walkthrough artifact.
+2. Once the project owner signs off on Phase 5, proceed to Phase 6 following the Phase 6 prompt in `Antigravity_Prompting_Plan.md`.
 3. Proceed one phase at a time and stop at each phase gate.
