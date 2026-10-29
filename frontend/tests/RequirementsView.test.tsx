@@ -36,7 +36,7 @@ describe('RequirementsView Component States', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No Requirements Registered')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText(/When a user submits an order/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/When a customer enters an incorrect password/i)).toBeInTheDocument();
       expect(screen.getByText('0 / 4000 chars')).toBeInTheDocument();
     });
   });
@@ -65,6 +65,45 @@ describe('RequirementsView Component States', () => {
       expect(screen.getByText('draft')).toBeInTheDocument();
       expect(screen.getByText('AUTH-101')).toBeInTheDocument();
       expect(screen.getByText('Invalid login credentials must display a red error message.')).toBeInTheDocument();
+    });
+  });
+
+  it('renders analyzed requirement with ambiguity finding badge', async () => {
+    const mockRequirements: RequirementItem[] = [
+      {
+        _id: 'req_2',
+        project_id: 'proj_123',
+        version: 1,
+        original_text: 'The portal must be fast and intuitive.',
+        normalized_text: 'The portal must be fast and intuitive.',
+        status: 'analyzed',
+        nlp_analysis: {
+          actors: ['user'],
+          actions: ['load'],
+          entities: ['portal'],
+          conditions: [],
+          constraints: [],
+          outcomes: ['portal must be fast'],
+          ambiguity_findings: [
+            { phrase: 'fast', reason: 'Vague performance descriptor', severity: 'warning' },
+            { phrase: 'intuitive', reason: 'Subjective term', severity: 'warning' }
+          ],
+          processing_version: 'spacy-3.8-rule-v1'
+        },
+        created_at: '2026-10-29T00:00:00Z',
+        updated_at: '2026-10-29T00:00:00Z'
+      }
+    ];
+
+    vi.mocked(requirementsService.listRequirements).mockResolvedValue(mockRequirements);
+
+    render(<RequirementsView project={dummyProject} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('v1')).toBeInTheDocument();
+      expect(screen.getByText('analyzed')).toBeInTheDocument();
+      expect(screen.getByText(/2 ambiguity findings/i)).toBeInTheDocument();
+      expect(screen.getByText('The portal must be fast and intuitive.')).toBeInTheDocument();
     });
   });
 });

@@ -81,10 +81,25 @@ export async function seedDatabase(): Promise<void> {
         jira_key: 'SEC-101',
         author: 'System Admin'
       },
-      status: 'draft',
+      status: 'analyzed',
+      nlp_analysis: {
+        actors: ['customer'],
+        actions: ['enter', 'lock', 'display'],
+        entities: ['password', 'login form', 'lockout message'],
+        conditions: ['When a customer enters an incorrect password three consecutive times'],
+        constraints: ['15 minutes', 'three consecutive times'],
+        outcomes: ['the login form must be locked for 15 minutes', 'display an informative lockout message'],
+        explicit_negations: [],
+        ambiguity_findings: [],
+        evidence_spans: [
+          { category: 'actor', text: 'customer', start_char: 7, end_char: 15, confidence: 0.9 },
+          { category: 'constraint', text: '15 minutes', start_char: 94, end_char: 104, confidence: 0.95 }
+        ],
+        processing_version: 'spacy-3.8-rule-v1'
+      },
       created_by: createdUsers.qa_engineer._id
     });
-    logger.info('Seeded initial requirement created.');
+    logger.info('Seeded initial requirement created with spaCy NLP analysis.');
   }
 
   // 4. Create or ensure Local CI Target Environment

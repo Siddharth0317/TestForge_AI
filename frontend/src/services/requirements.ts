@@ -1,5 +1,34 @@
 import { apiRequest } from './api';
 
+export interface INLPAmbiguityFinding {
+  phrase: string;
+  reason: string;
+  severity: 'warning' | 'info';
+  start_char?: number;
+  end_char?: number;
+}
+
+export interface INLPEvidenceSpan {
+  category: string;
+  text: string;
+  start_char: number;
+  end_char: number;
+  confidence: number;
+}
+
+export interface INLPAnalysis {
+  actors: string[];
+  actions: string[];
+  entities: string[];
+  conditions: string[];
+  constraints: string[];
+  outcomes: string[];
+  explicit_negations?: string[];
+  ambiguity_findings: INLPAmbiguityFinding[];
+  evidence_spans?: INLPEvidenceSpan[];
+  processing_version?: string;
+}
+
 export interface RequirementItem {
   _id: string;
   project_id: string;
@@ -12,6 +41,7 @@ export interface RequirementItem {
     author?: string;
     document_ref?: string;
   };
+  nlp_analysis?: INLPAnalysis;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +76,11 @@ export const requirementsService = {
       method: 'PATCH',
       body: JSON.stringify({ original_text })
     });
+  },
+
+  async analyzeRequirement(requirementId: string): Promise<RequirementItem> {
+    return apiRequest<RequirementItem>(`/requirements/${requirementId}/analyze`, {
+      method: 'POST'
+    });
   }
 };
-

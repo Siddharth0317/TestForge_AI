@@ -7,11 +7,22 @@ export interface INLPAnalysis {
   conditions: string[];
   constraints: string[];
   outcomes: string[];
+  explicit_negations?: string[];
   ambiguity_findings: Array<{
     phrase: string;
     reason: string;
     severity: 'warning' | 'info';
+    start_char?: number;
+    end_char?: number;
   }>;
+  evidence_spans?: Array<{
+    category: string;
+    text: string;
+    start_char: number;
+    end_char: number;
+    confidence: number;
+  }>;
+  processing_version?: string;
 }
 
 export interface IMLClassification {
@@ -76,16 +87,32 @@ const RequirementSchema = new Schema<IRequirement>(
       conditions: { type: [String], default: [] },
       constraints: { type: [String], default: [] },
       outcomes: { type: [String], default: [] },
+      explicit_negations: { type: [String], default: [] },
       ambiguity_findings: {
         type: [
           {
             phrase: String,
             reason: String,
-            severity: { type: String, enum: ['warning', 'info'], default: 'warning' }
+            severity: { type: String, enum: ['warning', 'info'], default: 'warning' },
+            start_char: Number,
+            end_char: Number
           }
         ],
         default: []
-      }
+      },
+      evidence_spans: {
+        type: [
+          {
+            category: String,
+            text: String,
+            start_char: Number,
+            end_char: Number,
+            confidence: Number
+          }
+        ],
+        default: []
+      },
+      processing_version: { type: String, default: 'spacy-3.8-rule-v1' }
     },
     ml_classification: {
       category: { type: String },

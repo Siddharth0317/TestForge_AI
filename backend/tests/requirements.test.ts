@@ -1,6 +1,7 @@
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { vi } from 'vitest';
 import { createApp } from '../src/app';
 import { User } from '../src/models/User';
 import { Project } from '../src/models/Project';
@@ -89,6 +90,71 @@ describe('Requirements & Environments Integration Tests', () => {
     expect(res.body.data.version).toBe(2);
     expect(res.body.data.original_text).toBe('Updated requirement text version 2.');
     expect(res.body.data.status).toBe('draft');
+  });
+
+  it('POST /api/v1/requirements/:requirementId/analyze updates requirement with nlp_analysis', async () => {
+    const requirement = await Requirement.create({
+      project_id: new mongoose.Types.ObjectId(projectId),
+      version: 1,
+      original_text: 'When a customer enters an incorrect password three consecutive times, the login form must be locked for 15 minutes.',
+      normalized_text: 'When a customer enters an incorrect password three consecutive times, the login form must be locked for 15 minutes.',
+      status: 'draft',
+      created_by: new mongoose.Types.ObjectId(userId)
+    });
+
+    // Spy on AIServiceClient.analyzeRequirement
+    const { AIServiceClient } = await import('../src/services/aiService');
+    const spy = vi.spyOn(AIServiceClient, 'analyzeRequirement').mockResolvedValueOnce({
+      version: 1,
+      normalized_text: 'When a customer enters an incorrect password three consecutive times, the login form must be locked for 15 minutes.',
+      actors: ['customer'],
+      actions: ['enter', 'lock'],
+      entities: ['password', 'login form'],
+      conditions: ['When a customer enters an incorrect password three consecutive times'],
+      constraints: ['15 minutes', 'three consecutive times'],
+      outcomes: ['the login form must be locked for 15 minutes'],
+      ambiguity_findings: [],
+      evidence_spans: [
+        { category: 'actor', text: 'customer', start_char: 7, end_char: 15, confidence: 0.9 }
+      ],
+      processing_version: 'spacy-3.8-rule-v1'
+    });
+
+    const res = await request(app)
+      .post(`/api/v1/requirements/${requirement._id}/analyze`)
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.status).toBe('analyzed');
+    expect(res.body.data.nlp_analysis.actors).toContain('customer');
+    expect(res.body.data.nlp_analysis.constraints).toContain('15 minutes');
+    expect(res.body.data.nlp_analysis.processing_version).toBe('spacy-3.8-rule-v1');
+
+    spy.mockRestore();
+  });
+
+  it('POST /api/v1/requirements/:requirementId/analyze returns 502 when AI service fails', async () => {
+    const requirement = await Requirement.create({
+      project_id: new mongoose.Types.ObjectId(projectId),
+      version: 1,
+      original_text: 'User enters credentials.',
+      normalized_text: 'User enters credentials.',
+      status: 'draft',
+      created_by: new mongoose.Types.ObjectId(userId)
+    });
+
+    const { AIServiceClient } = await import('../src/services/aiService');
+    const spy = vi.spyOn(AIServiceClient, 'analyzeRequirement').mockResolvedValueOnce(null);
+
+    const res = await request(app)
+      .post(`/api/v1/requirements/${requirement._id}/analyze`)
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(502);
+    expect(res.body.error.code).toBe('AI_SERVICE_UNAVAILABLE');
+
+    spy.mockRestore();
   });
 
   it('POST /api/v1/projects/:projectId/environments saves target environment and locators', async () => {

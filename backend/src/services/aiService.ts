@@ -1,0 +1,81 @@
+import { env } from '../config/env';
+import { logger } from '../utils/logger';
+import { INLPAnalysis } from '../models/Requirement';
+
+export interface AIRequirementAnalysisResponse {
+  requirement_id?: string;
+  version: number;
+  normalized_text: string;
+  actors: string[];
+  actions: string[];
+  entities: string[];
+  conditions: string[];
+  constraints: string[];
+  outcomes: string[];
+  explicit_negations?: string[];
+  ambiguity_findings: Array<{
+    phrase: string;
+    reason: string;
+    severity: 'warning' | 'info';
+    start_char?: number;
+    end_char?: number;
+  }>;
+  evidence_spans: Array<{
+    category: string;
+    text: string;
+    start_char: number;
+    end_char: number;
+    confidence: number;
+  }>;
+  processing_version: string;
+}
+
+export class AIServiceClient {
+  private static baseUrl = env.AI_SERVICE_URL;
+  private static serviceKey = env.INTERNAL_SERVICE_KEY;
+
+  public static async analyzeRequirement(
+    text: string,
+    requirementId?: string,
+    version: number = 1
+  ): Promise<AIRequirementAnalysisResponse | null> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(`${this.baseUrl}/internal/v1/requirements/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Service-Key': this.serviceKey
+        },
+        body: JSON.stringify({
+          text,
+          requirement_id: requirementId,
+          version
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.warn(
+          { status: response.status, body: errorText },
+          'AI service rejected requirement analysis request'
+        );
+        return null;
+      }
+
+      const data = (await response.json()) as AIRequirementAnalysisResponse;
+      return data;
+    } catch (error: any) {
+      logger.warn(
+        { err: error.message },
+        'Failed to connect to AI service for requirement analysis; falling back to draft status'
+      );
+      return null;
+    }
+  }
+}

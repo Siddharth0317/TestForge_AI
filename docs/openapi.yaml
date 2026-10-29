@@ -229,6 +229,25 @@ paths:
         '200':
           description: Updated requirement with incremented version counter
 
+  /requirements/{requirementId}/analyze:
+    post:
+      summary: Explicitly run or refresh deterministic NLP linguistic analysis (spaCy)
+      tags: [Requirements]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requirementId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Requirement analyzed with linguistic entities and ambiguity findings
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '502':
+          description: AI microservice unavailable
+
   /projects/{projectId}/environments:
     post:
       summary: Configure a target environment and locators
@@ -337,3 +356,4 @@ components:
                   field: { type: string }
                   message: { type: string }
             timestamp: { type: string, format: date-time }
+

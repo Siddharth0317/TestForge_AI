@@ -6,6 +6,35 @@ All notable, owner-approved product requirement and implementation changes are r
 
 ## Change History
 
+### 2026-10-29 — Phase 3 NLP Requirement Analysis Pipeline Complete
+
+- **Change ID:** `CHG-004`
+- **Type:** `AI Service & Deterministic NLP Extraction`
+- **Requested by:** Project Owner
+- **Approval:** `APPROVED`
+- **Reason:** Implement Phase 3 deliverables per `Spec.md` Section 9, Section 17, and `Antigravity_Prompting_Plan.md`.
+- **Previous behavior/requirement:** Requirements stored without linguistic extraction or ambiguity analysis (Phase 2).
+- **New behavior/requirement:**
+  - Implemented `RequirementNormalizer` for safe unicode normalization, whitespace collapsing, control-character stripping, and 5-4000 character validation.
+  - Integrated spaCy (`en_core_web_sm`) in `ai-service/app/nlp/` with `LinguisticCandidateExtractor` extracting actors, actions, entities, conditions, constraints, explicit negations, expected outcomes, and traceable character-level evidence spans.
+  - Implemented `AmbiguityDetector` surfacing vague subjective terms, non-normative weak modals (`should`, `might`), unbounded quantifiers (`some`, `many`, `etc.`), passive voice without agent, and conditional triggers lacking expected outcomes.
+  - Exposed authenticated internal endpoint `POST /internal/v1/requirements/analyze` requiring `X-Internal-Service-Key`.
+  - Wired Node backend (`AIServiceClient`) to invoke AI service on requirement creation/updates with graceful fallback to `draft` on service error.
+  - Added backend endpoint `POST /api/v1/requirements/:id/analyze` and updated Mongoose `Requirement` schema with `nlp_analysis` and `status: 'analyzed'`.
+  - Updated frontend `RequirementsView` to render extracted linguistic badges (actors, actions, entities, conditions, constraints, outcomes), ambiguity warning alerts, and an interactive "Run NLP Analysis" button.
+- **Spec.md sections updated:** Section 5.1, Section 9.2, Section 9.3, Section 12, Section 17 (Phase 3).
+- **Decision IDs:** `DEC-002`, `DEC-003`
+- **Affected phase(s):** Phase 3 (completed at gate), ready for Phase 4.
+- **Verification:**
+  - `ai-service` tests: 30/30 passing with pytest.
+  - `backend` integration tests: 20/20 passing with Vitest.
+  - `frontend` component tests: 10/10 passing with Vitest.
+  - `automation` safety tests: 4/4 passing.
+  - TypeScript compilation: 0 errors across monorepo.
+  - Total test suite: 64/64 passing (100%).
+
+---
+
 ### 2026-10-29 — Phase 2 Core Backend, Database, and Application Shell Complete
 
 - **Change ID:** `CHG-003`

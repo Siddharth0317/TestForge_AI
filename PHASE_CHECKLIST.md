@@ -63,13 +63,13 @@
 
 | Criterion | Status | Evidence path / test | Verified date / commit | Unresolved issue / next action |
 |---|---|---|---|---|
-| Requirement normalization implemented | NOT STARTED | | | |
-| Structured candidate extraction implemented | NOT STARTED | | | |
-| Ambiguity/missing-information signals surfaced | NOT STARTED | | | |
-| Analysis traces to original requirement and version | NOT STARTED | | | |
-| Empty, malformed, boundary, and ambiguous inputs handled safely | NOT STARTED | | | |
-| Tests cover representative and boundary cases | NOT STARTED | | | |
-| Limitations documented; no unsupported accuracy claims | NOT STARTED | | | |
+| Requirement normalization implemented | **PASS** | `ai-service/app/nlp/normalizer.py`, `ai-service/tests/test_normalizer.py` | 2026-10-29 | Strips control chars, collapses whitespace, enforces 5-4000 char bounds. |
+| Structured candidate extraction implemented | **PASS** | `ai-service/app/nlp/extractor.py`, `ai-service/tests/test_extractor.py` | 2026-10-29 | spaCy dependency & POS extractor for actors, actions, entities, conditions, constraints, outcomes. |
+| Ambiguity/missing-information signals surfaced | **PASS** | `ai-service/app/nlp/ambiguity.py`, `ai-service/tests/test_ambiguity.py` | 2026-10-29 | Detects vague terms, weak modals, unbounded quantifiers, passive voice, missing outcomes. |
+| Analysis traces to original requirement and version | **PASS** | `ai-service/app/nlp/schemas.py`, `backend/src/models/Requirement.ts` | 2026-10-29 | Evidence spans with start/end character offsets, requirement_id, version lineage. |
+| Empty, malformed, boundary, and ambiguous inputs handled safely | **PASS** | `ai-service/tests/test_normalizer.py`, `ai-service/tests/test_api_requirements.py` | 2026-10-29 | Input validation fails cleanly with 400/422; graceful fallback to draft on service failure. |
+| Tests cover representative and boundary cases | **PASS** | `ai-service/tests/` (30 passed), `backend/tests/` (20 passed) | 2026-10-29 | Tested with complex conditional, multi-actor, boundary, and negation scenarios. |
+| Limitations documented; no unsupported accuracy claims | **PASS** | `ai-service/app/nlp/pipeline.py`, `docs/architecture.md` | 2026-10-29 | Transparent rule versioning (`spacy-3.8-rule-v1`); candidates treated as heuristic input. |
 
 ---
 

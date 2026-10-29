@@ -4,12 +4,16 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.security import verify_internal_key
+from app.api.v1.requirements import router as requirements_router
 
 app = FastAPI(
     title="TestForge AI Service",
     description="Deterministic NLP, ML Requirement Classification, and Structured Test Generation",
     version="1.0.0"
 )
+
+# Register API routers
+app.include_router(requirements_router)
 
 # CORS middleware for local development
 app.add_middleware(

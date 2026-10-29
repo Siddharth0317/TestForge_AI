@@ -3,6 +3,7 @@ import { z } from 'zod';
 import mongoose from 'mongoose';
 import { Requirement } from '../../models/Requirement';
 import { authenticate, requireProjectRole } from '../../middleware/auth';
+import { AIServiceClient } from '../../services/aiService';
 
 export const requirementsRouter = Router();
 
@@ -44,7 +45,14 @@ requirementsRouter.post('/projects/:projectId/requirements', requireProjectRole(
     }
 
     const { original_text, source_metadata } = parseResult.data;
-    const normalized_text = original_text.trim().replace(/\s+/g, ' ');
+    let normalized_text = original_text.trim().replace(/\s+/g, ' ');
+
+    // Call AI microservice for deterministic NLP analysis
+    const analysis = await AIServiceClient.analyzeRequirement(original_text, undefined, 1);
+    const status = analysis ? 'analyzed' : 'draft';
+    if (analysis?.normalized_text) {
+      normalized_text = analysis.normalized_text;
+    }
 
     const requirement = await Requirement.create({
       project_id: new mongoose.Types.ObjectId(req.params.projectId),
@@ -52,7 +60,8 @@ requirementsRouter.post('/projects/:projectId/requirements', requireProjectRole(
       original_text,
       normalized_text,
       source_metadata,
-      status: 'draft',
+      nlp_analysis: analysis || undefined,
+      status,
       created_by: new mongoose.Types.ObjectId(req.user!.userId)
     });
 
@@ -121,7 +130,7 @@ requirementsRouter.get('/requirements/:requirementId', async (req: Request, res:
   }
 });
 
-// Edit requirement (bumps version counter and preserves version history)
+// Edit requirement (bumps version counter, preserves lineage, and re-runs NLP analysis)
 requirementsRouter.patch('/requirements/:requirementId', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { requirementId } = req.params;
@@ -167,15 +176,23 @@ requirementsRouter.patch('/requirements/:requirementId', async (req: Request, re
     }
 
     const { original_text, source_metadata } = parseResult.data;
-    const normalized_text = original_text.trim().replace(/\s+/g, ' ');
+    let normalized_text = original_text.trim().replace(/\s+/g, ' ');
+    const nextVersion = currentReq.version + 1;
+
+    // Trigger re-analysis for new version
+    const analysis = await AIServiceClient.analyzeRequirement(original_text, currentReq._id.toString(), nextVersion);
+    if (analysis?.normalized_text) {
+      normalized_text = analysis.normalized_text;
+    }
 
     currentReq.original_text = original_text;
     currentReq.normalized_text = normalized_text;
     if (source_metadata) {
       currentReq.source_metadata = source_metadata;
     }
-    currentReq.version += 1;
-    currentReq.status = 'draft'; // reset status to draft after content revision
+    currentReq.version = nextVersion;
+    currentReq.nlp_analysis = analysis || currentReq.nlp_analysis;
+    currentReq.status = analysis ? 'analyzed' : 'draft';
 
     await currentReq.save();
 
@@ -188,3 +205,66 @@ requirementsRouter.patch('/requirements/:requirementId', async (req: Request, re
   }
 });
 
+// Explicit trigger endpoint to analyze or re-analyze a requirement
+requirementsRouter.post('/requirements/:requirementId/analyze', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { requirementId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(requirementId)) {
+      res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid requirement ID.',
+          request_id: req.id,
+          details: [],
+          timestamp: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
+    const requirement = await Requirement.findById(requirementId);
+    if (!requirement) {
+      res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Requirement not found.',
+          request_id: req.id,
+          details: [],
+          timestamp: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
+    const analysis = await AIServiceClient.analyzeRequirement(
+      requirement.original_text,
+      requirement._id.toString(),
+      requirement.version
+    );
+
+    if (!analysis) {
+      res.status(502).json({
+        error: {
+          code: 'AI_SERVICE_UNAVAILABLE',
+          message: 'Failed to complete requirement analysis with AI service.',
+          request_id: req.id,
+          details: [],
+          timestamp: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
+    requirement.normalized_text = analysis.normalized_text;
+    requirement.nlp_analysis = analysis;
+    requirement.status = 'analyzed';
+    await requirement.save();
+
+    res.status(200).json({
+      success: true,
+      data: requirement
+    });
+  } catch (error) {
+    next(error);
+  }
+});
