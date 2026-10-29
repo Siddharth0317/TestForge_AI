@@ -217,17 +217,55 @@ Phase 5 establishes reliable, structured candidate test case generation via an e
 
 ---
 
-## 3. Verification & Test Evidence
+## 3. Phase 6 Deliverables: Validation, Review Studio, and Versioning
 
-All 100 tests across the monorepo pass cleanly (100% pass rate):
+### 1. Deterministic Validation Engine (AI Service)
+* **Engine [`validator.py`](file:///c:/Projects/TestForge_AI/ai-service/app/validation/validator.py):**
+  * Enforces schema rules, step sequencing, and action allowlist (`navigate`, `click`, `enter_text`, `select_option`, `wait_for_visible`, `assert_text`, `assert_visible`, `assert_url`).
+  * Enforces assertion presence: test cases with zero verifiable assertions are flagged with `severity: error`.
+  * Verifies source evidence: checks whether quoted spans are present in requirement text.
+  * Validates boundary scenarios against requirement numeric constraints and keywords.
+  * Surfaces unstated model assumptions as `severity: info` findings.
+* **Internal API:** `POST /internal/v1/test-cases/validate` secured by `X-Internal-Service-Key`.
+
+### 2. Transparent Rule-Based Prioritization
+* Calculates a deterministic 0–100 score with a transparent arithmetic breakdown:
+  * Scenario base: `authorization` (35), `positive` (30), `negative`/`error_handling` (25), `boundary` (20).
+  * Critical keywords boost (+20).
+  * Assertion completeness (+15).
+  * Step sequence defined (+10).
+  * Deductions for assumptions (-10), warnings (-10), and blocking errors (-35).
+  * Clearly distinguished from ML classification confidence.
+
+### 3. Core Persistence & Versioning (Backend)
+* **Mongoose Models:**
+  * [`TestCase.ts`](file:///c:/Projects/TestForge_AI/backend/src/models/TestCase.ts): Tenant-isolated with compound indexes, full schema validation, and revision pointers.
+  * [`AuditEvent.ts`](file:///c:/Projects/TestForge_AI/backend/src/models/AuditEvent.ts): Immutable event logging for creation, edits, reviews, and version bumps.
+* **Duplicate Detection:** Non-destructively flags duplicate candidates matching existing titles or action sequences.
+* **Review Lifecycle & Immutability:** Editing an approved test case creates a new revision (`v1` -> `v2`) and resets review status to `pending`, ensuring historical execution records remain permanently linked to the exact revision used. Approval fails closed if blocking schema errors exist.
+
+### 4. Test Case Explorer UI & Review Studio (Frontend)
+* **View [`TestCasesView.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/features/test-cases/TestCasesView.tsx):**
+  * Real-time metrics overview (Total, Pending, Approved, Needs Changes, Rejected, Duplicates).
+  * Filter bar with status tabs, scenario filter, priority filter, and search.
+  * Interactive review buttons: Approve, Reject (with reason dialog), Request Changes (with feedback dialog), and Edit Case modal.
+  * Audit Trail drawer displaying chronological history of review actions.
+* **Requirements Studio Integration [`RequirementsView.tsx`](file:///c:/Projects/TestForge_AI/frontend/src/features/requirements/RequirementsView.tsx):**
+  * "Import Candidates into Test Suite" button with instant feedback and direct link to the Test Case Explorer.
+
+---
+
+## 4. Verification & Test Evidence
+
+All **123 tests** across the monorepo pass cleanly (100% pass rate):
 
 | Component | Test Runner | Test Files | Total Tests | Status | Passing | Failing |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **AI Service (NLP, ML, LLM)** | Pytest | 10 | 60 | **PASS** | **60** | 0 |
-| **Backend API & Persistence** | Vitest + Supertest | 5 | 25 | **PASS** | **25** | 0 |
-| **Frontend UI Components** | Vitest + Testing Library | 3 | 11 | **PASS** | **11** | 0 |
+| **AI Service (NLP, ML, LLM, Validation)** | Pytest | 11 | 70 | **PASS** | **70** | 0 |
+| **Backend API & Persistence** | Vitest + Supertest | 6 | 32 | **PASS** | **32** | 0 |
+| **Frontend UI Components** | Vitest + Testing Library | 4 | 17 | **PASS** | **17** | 0 |
 | **Automation Worker Safety** | Pytest | 1 | 4 | **PASS** | **4** | 0 |
-| **Monorepo Total** | | **19** | **100** | **PASS** | **100 (100%)** | **0** |
+| **Monorepo Total** | | **22** | **123** | **PASS** | **123 (100%)** | **0** |
 
 ### TypeScript Compilation Status
 * `backend`: `tsc --noEmit` $\to$ **0 errors**.
@@ -235,15 +273,15 @@ All 100 tests across the monorepo pass cleanly (100% pass rate):
 
 ---
 
-## 4. How to Run and Verify Locally
+## 5. How to Run and Verify Locally
 
 ### 1. Run All Automated Test Suites
 ```powershell
-# 1. AI Service Tests (spaCy NLP, ML Classifier, LLM Providers, Generator, APIs)
+# 1. AI Service Tests (spaCy NLP, ML Classifier, LLM Providers, Generator, Validation)
 cd c:\Projects\TestForge_AI
 .\ai-service\.venv\Scripts\pytest -c ai-service/pyproject.toml ai-service/tests
 
-# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements, Generation)
+# 2. Backend Integration Tests (Mongoose, Auth, RBAC, Requirements, Generation, Test Cases)
 cd c:\Projects\TestForge_AI\backend
 npm test
 
@@ -271,14 +309,15 @@ cd c:\Projects\TestForge_AI\frontend
 npm run dev
 ```
 
-Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open the **Requirement Studio**, and click **"Generate Cases"** on any requirement to inspect the generated candidates, action sequences, and assumption alerts.
+Navigate to `http://localhost:5173`, log in with `admin@testforge.ai` / `AdminPass123!`, open **Requirement Studio**, click **"Generate Cases"**, and click **"Import Candidates into Test Suite"**. Switch to the **"Test Cases"** tab to review, approve/reject, edit, and inspect the audit trail.
 
 ---
 
-## 5. Next Phase Preview: Phase 6
+## 6. Next Phase Preview: Phase 7
 
-With Phase 5 verified, the platform moves to **Phase 6 (Validation, Traceability, Review, and Versioning)**:
-* **Deterministic Schema & Business-Rule Validation:** Validates required fields, step action allowlist, locator format, and assertion completeness.
-* **Traceability & Versioning:** Enforces strict requirement-to-test lineage, version bumps on case modification, and audit log events.
-* **Review Lifecycle:** Human review actions (`approve`, `reject`, `needs_changes`).
-* **Test Case Explorer UI:** Full review, editing, and approval workflow studio.
+With Phase 6 verified, the platform moves to **Phase 7 (Controlled Selenium Execution)**:
+* **Approved Test Environments & Target Allowlists:** Strict allowed-host firewall and SSRF protection.
+* **Versioned Locator Registry:** Mapping of symbolic `target_ref` keys to WebDriver locators (`id`, `css`, `xpath`, `url`).
+* **Execution Plan Compiler:** Compiles approved `TestCase` documents into verified execution plans.
+* **Isolated Selenium Worker:** Executes actions with browser cleanups, timeouts, and sanitized evidence logging.
+* **Truthful Result Classification:** Distinguishes assertion failures from browser/infrastructure errors.

@@ -27,13 +27,13 @@
 
 ## Current Checkpoint
 
-- **Current phase:** Phase 5 — LLM Provider Integration and Structured Generation
+- **Current phase:** Phase 6 — Validation, Traceability, Review, and Versioning
 - **Phase status:** `AT GATE (Awaiting Owner Review)`
 - **Last verified checkpoint date:** `2026-10-29`
-- **Last completed task:** Complete Phase 5: Implemented provider-agnostic LLM interface (`LLMProvider`) with normalized exception hierarchy and standard token accounting. Implemented Google Gemini provider (`GeminiLLMProvider`) utilizing the official `google-genai` SDK and deterministic offline test provider (`MockLLMProvider`). Defined strict Pydantic schemas for candidate test cases conforming to Spec Section 7.1 across 6 scenario archetypes (`positive`, `negative`, `boundary`, `authorization`, `error_handling`, `state_transition`). Authored versioned prompt templates (`PROMPT_TEMPLATE_V1`) incorporating requirement context and deterministic NLP extractions. Built generation orchestrator (`TestCaseGenerator`) enforcing timeouts, bounded retries (exponential backoff for 429/timeout), and JSON sanitization. Exposed internal endpoint `POST /internal/v1/test-cases/generate` with internal key auth. Created Mongoose `GenerationJob` model with compound indexes. Implemented backend REST endpoints in `generation.router.ts` (`POST /generate`, `GET /generation-jobs`). Enhanced frontend `RequirementsView` with interactive "Generate Cases" action and structured Candidate Test Case display showing scenario badges, step sequences, expected results, and unsupported assumption alerts. All 100 tests passing across the monorepo (100% pass rate).
-- **Current task:** Present Phase 5 Gate Report and Walkthrough to project owner for approval.
-- **Next task:** Phase 6 — Validation, Traceability, Review, and Versioning (deterministic schema checks, test case reviews, approve/reject workflow, revision history).
-- **Owner approval required for:** Phase 5 Gate sign-off to proceed to Phase 6.
+- **Last completed task:** Complete Phase 6: Built deterministic validation engine (`ai-service/app/validation/validator.py`) enforcing schema validity, step action allowlist, assertion completeness, boundary constraints, and unstated assumption flags. Built explainable rule-based prioritization (0-100 score + detailed breakdown). Exposed authenticated internal validation endpoint `POST /internal/v1/test-cases/validate`. Created Mongoose persistence models `TestCase` and `AuditEvent` with tenant isolation and compound indexes. Implemented duplicate detection flagging identical titles or action sequences without destructive removal. Built review workflow endpoints (`approve`, `reject`, `request-changes`, `editTestCase`) with concurrency locks and version bumping (v1 -> v2) on approved case edits. Created dedicated Test Case Explorer & Review Studio UI (`TestCasesView.tsx`) with status filters, duplicate callouts, edit modals, and audit event history. All 123 tests passing across the monorepo (100% pass rate).
+- **Current task:** Present Phase 6 Gate Report and Walkthrough to project owner for approval.
+- **Next task:** Phase 7 — Controlled Selenium Execution (environment configuration, allowed-host enforcement, locator registry, isolated worker, safe browser cleanup).
+- **Owner approval required for:** Phase 6 Gate sign-off to proceed to Phase 7.
 
 ## Verification Record
 
@@ -45,27 +45,26 @@
 | 2026-10-29 | Phase 2 | Full verification suite | **PASS** | 35 tests passing | Core backend, Mongoose persistence, application shell. |
 | 2026-10-29 | Phase 3 | Full verification suite | **PASS** | 64 tests passing | spaCy NLP extraction, ambiguity detection, backend & UI. |
 | 2026-10-29 | Phase 4 | Full verification suite | **PASS** | 78 tests passing | ML dataset, TF-IDF + Logistic Regression, confidence scoring. |
-| 2026-10-29 | Phase 5 | `pytest` in `ai-service/` | **PASS** | 60 passed | LLM providers, mock simulation, generator retries, internal API. |
-| 2026-10-29 | Phase 5 | `npm test --prefix backend` | **PASS** | 25 passed | GenerationJob persistence, auth, role enforcement, error handling. |
-| 2026-10-29 | Phase 5 | `npm test --prefix frontend` | **PASS** | 11 passed | RequirementsView with candidate test case cards & assumptions. |
-| 2026-10-29 | Phase 5 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
-| 2026-10-29 | Phase 5 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
-| 2026-10-29 | Phase 5 | Live REST API invocation | **PASS** | PowerShell `Invoke-RestMethod` | Successfully generated 3 candidate cases via `POST /internal/v1/test-cases/generate`. |
-| 2026-10-29 | Phase 5 | Defect fix: RequirementsView blank screen | **PASS** | `fc1d9cb` commit | Added ErrorBoundary shell and safe fallback rendering for ML tags & candidates. |
+| 2026-10-29 | Phase 5 | Full verification suite | **PASS** | 100 tests passing | LLM providers, candidate generation, backend jobs, and candidate cards. |
+| 2026-10-29 | Phase 6 | `pytest` in `ai-service/` | **PASS** | 70 passed | Validation engine, boundary limits, schema checks, explainable priority. |
+| 2026-10-29 | Phase 6 | `npm test --prefix backend` | **PASS** | 32 passed | TestCase persistence, duplicate detection, review lifecycle, version bump, audit trail. |
+| 2026-10-29 | Phase 6 | `npm test --prefix frontend` | **PASS** | 17 passed | TestCasesView, approval flow, rejection modal, duplicate badges, error gating. |
+| 2026-10-29 | Phase 6 | `pytest` in `automation/` | **PASS** | 4 passed | Host allowlist & SSRF firewall tests. |
+| 2026-10-29 | Phase 6 | TypeScript compile checks | **PASS** | 0 errors across backend & frontend | Type checks clean (`tsc --noEmit`, `vite build`). |
 
 ## Active Blockers and Risks
 
-*None currently blocking. All Phase 5 criteria are satisfied.*
+*None currently blocking. All Phase 6 criteria are satisfied.*
 
 ## Known Failing or Unrun Checks
 
 - **Failing:** None
 - **Blocked:** None
-- **Not run:** None for Phase 5.
+- **Not run:** None for Phase 6.
 - **Flaky:** None
 
 ## Handoff Instructions
 
-1. Review Phase 5 deliverables, candidate test case generation, and walkthrough artifact.
-2. Once the project owner signs off on Phase 5, proceed to Phase 6 following the Phase 6 prompt in `Antigravity_Prompting_Plan.md`.
+1. Review Phase 6 deliverables, validation engine, review workflows, versioning, and walkthrough artifact.
+2. Once the project owner signs off on Phase 6, proceed to Phase 7 following the Phase 7 prompt in `Antigravity_Prompting_Plan.md`.
 3. Proceed one phase at a time and stop at each phase gate.

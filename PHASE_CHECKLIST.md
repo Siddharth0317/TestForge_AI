@@ -107,14 +107,14 @@
 
 | Criterion | Status | Evidence path / test | Verified date / commit | Unresolved issue / next action |
 |---|---|---|---|---|
-| Deterministic schema and required-field validation implemented | NOT STARTED | | | |
-| Requirement-to-test traceability enforced | NOT STARTED | | | |
-| Expected results/assertions and supported actions validated | NOT STARTED | | | |
-| Duplicate detection and transparent prioritization implemented | NOT STARTED | | | |
-| Human review/edit/approve/reject lifecycle implemented | NOT STARTED | | | |
-| Revisions and audit history persisted | NOT STARTED | | | |
-| Historical runs remain tied to the exact case revision | NOT STARTED | | | |
-| Invalid cases, lifecycle transitions, permissions, and audit tests pass | NOT STARTED | | | |
+| Deterministic schema and required-field validation implemented | **PASS** | `ai-service/app/validation/validator.py`, `ai-service/tests/test_validation.py` | 2026-10-29 / `6e62b93` | Verified schema rules, actions & assertions |
+| Requirement-to-test traceability enforced | **PASS** | `TestCase` references `requirement_id`, `requirement_version`, `source_evidence` spans | 2026-10-29 / `6e62b93` | Unmatched spans flagged with warnings |
+| Expected results/assertions and supported actions validated | **PASS** | `schema_missing_assertions`, `schema_disallowed_action` rules enforced | 2026-10-29 / `6e62b93` | Zero-assertion cases blocked from approval |
+| Duplicate detection and transparent prioritization implemented | **PASS** | `TestCasesService.detectDuplicate()`, rule-based 0-100 score & rationale | 2026-10-29 / `6e62b93` | Duplicates flagged non-destructively; scoring separate from ML |
+| Human review/edit/approve/reject lifecycle implemented | **PASS** | `approve`, `reject`, `request-changes`, `editTestCase` endpoints & modals | 2026-10-29 / `6e62b93` | Review statuses: `pending`, `approved`, `rejected`, `needs_changes` |
+| Revisions and audit history persisted | **PASS** | `TestCase.version`, `previous_version_id`, `AuditEvent` collection | 2026-10-29 / `6e62b93` | Edits to approved cases create v2 and reset status |
+| Historical runs remain tied to the exact case revision | **PASS** | `version` immutable on approved snapshot; new revision spawned on edit | 2026-10-29 / `6e62b93` | Verified in `test-cases.test.ts` |
+| Invalid cases, lifecycle transitions, permissions, and audit tests pass | **PASS** | `ai-service/tests/test_validation.py`, `backend/tests/test-cases.test.ts`, `frontend/tests/TestCasesView.test.tsx` | 2026-10-29 / `6e62b93` | 123/123 monorepo tests passing |
 
 ---
 
@@ -186,11 +186,11 @@
 |---|---|---|---|---|
 | 0 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
 | 1 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
-| 2 | **AT GATE (Awaiting Owner Review)** | Antigravity (Lead Architect) | 2026-10-29 | None. All Phase 2 criteria verified. |
-| 3 | NOT STARTED | | | Dependent on Phase 2 approval |
-| 4 | NOT STARTED | | | Dependent on Phase 3 approval |
-| 5 | NOT STARTED | | | Dependent on Phase 4 approval |
-| 6 | NOT STARTED | | | Dependent on Phase 5 approval |
+| 2 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
+| 3 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
+| 4 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
+| 5 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
+| 6 | **AT GATE (Awaiting Owner Review)** | Antigravity (Lead Architect) | 2026-10-29 | None. All Phase 6 criteria verified. |
 | 7 | NOT STARTED | | | Dependent on Phase 6 approval |
 | 8 | NOT STARTED | | | Dependent on Phase 7 approval |
 | 9 | NOT STARTED | | | Dependent on Phase 8 approval |
