@@ -111,3 +111,4 @@ Each candidate object must adhere to this exact structure:
 }
 """)
     return "\n".join(context_lines)
+

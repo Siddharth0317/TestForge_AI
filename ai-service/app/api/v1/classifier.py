@@ -39,3 +39,4 @@ async def predict_requirement_category(request: RequirementClassificationRequest
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Classification inference failed: {str(e)}"
         )
+

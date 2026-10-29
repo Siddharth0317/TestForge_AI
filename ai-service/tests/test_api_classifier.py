@@ -62,3 +62,4 @@ async def test_predict_category_validation_too_short():
             headers={"X-Internal-Service-Key": settings.INTERNAL_SERVICE_KEY}
         )
         assert response.status_code == 422
+

@@ -319,11 +319,13 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                         {req.source_metadata.jira_key}
                       </span>
                     )}
-                    {req.ml_classification && (
+                    {req.ml_classification && req.ml_classification.category && (
                       <span className="flex items-center text-xs text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded font-medium">
                         <Brain className="h-3 w-3 mr-1 text-purple-400" />
-                        <span className="capitalize">{req.ml_classification.category.replace('_', ' ')}</span>
-                        <span className="text-[10px] text-purple-400 ml-1">({Math.round(req.ml_classification.confidence * 100)}%)</span>
+                        <span className="capitalize">{(req.ml_classification.category || '').replace('_', ' ')}</span>
+                        <span className="text-[10px] text-purple-400 ml-1">
+                          ({Math.round((req.ml_classification.confidence ?? 0) * 100)}%)
+                        </span>
                         {req.ml_classification.is_uncertain && (
                           <span className="ml-1 text-[10px] text-amber-400" title="Low classification certainty">⚠️</span>
                         )}
@@ -550,7 +552,7 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                 )}
 
                 {/* Candidate Test Cases Accordion */}
-                {latestJob && latestJob.candidates?.length > 0 && (
+                {latestJob && Array.isArray(latestJob.candidates) && latestJob.candidates.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-slate-800/80">
                     <button
                       onClick={() => toggleCandidatesExpand(req._id)}
@@ -587,20 +589,20 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
-                                  <span className={`px-2 py-0.5 rounded uppercase font-semibold text-[10px] border ${getScenarioBadgeClass(tc.scenario_type)}`}>
-                                    {tc.scenario_type}
+                                  <span className={`px-2 py-0.5 rounded uppercase font-semibold text-[10px] border ${getScenarioBadgeClass(tc.scenario_type || 'positive')}`}>
+                                    {tc.scenario_type || 'positive'}
                                   </span>
-                                  <span className="font-semibold text-white text-xs">{tc.title}</span>
+                                  <span className="font-semibold text-white text-xs">{tc.title || 'Untitled Test Case'}</span>
                                 </div>
                                 <div className="flex items-center space-x-2 text-[11px] text-slate-400">
                                   <span className="capitalize px-1.5 py-0.5 bg-slate-900 border border-slate-800 rounded">
-                                    Priority: <strong className="text-white">{tc.priority}</strong>
+                                    Priority: <strong className="text-white">{tc.priority || 'medium'}</strong>
                                   </span>
-                                  <span className="font-mono text-slate-500">{tc.test_case_id}</span>
+                                  <span className="font-mono text-slate-500">{tc.test_case_id || `tc-${idx}`}</span>
                                 </div>
                               </div>
 
-                              {tc.preconditions?.length > 0 && (
+                              {Array.isArray(tc.preconditions) && tc.preconditions.length > 0 && (
                                 <div className="text-slate-400">
                                   <span className="font-semibold text-slate-300">Preconditions: </span>
                                   <span>{tc.preconditions.join('; ')}</span>
@@ -611,10 +613,10 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                               <div className="space-y-1 pt-1">
                                 <span className="font-semibold text-slate-300 flex items-center space-x-1">
                                   <ListOrdered className="h-3 w-3 text-indigo-400" />
-                                  <span>Execution Steps ({tc.steps.length}):</span>
+                                  <span>Execution Steps ({Array.isArray(tc.steps) ? tc.steps.length : 0}):</span>
                                 </span>
                                 <div className="space-y-1 bg-slate-900/60 p-2 rounded border border-slate-850">
-                                  {tc.steps.map((st) => (
+                                  {Array.isArray(tc.steps) && tc.steps.map((st) => (
                                     <div key={st.step_number} className="flex items-center space-x-2 text-[11px]">
                                       <span className="text-slate-500 font-mono w-4">{st.step_number}.</span>
                                       <span className="bg-slate-800 text-indigo-300 px-1.5 py-0.2 rounded font-mono font-medium">
@@ -636,7 +638,7 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                               </div>
 
                               {/* Unsupported Assumptions Callout */}
-                              {tc.assumptions?.length > 0 && (
+                              {Array.isArray(tc.assumptions) && tc.assumptions.length > 0 && (
                                 <div className="p-2 bg-amber-500/5 border border-amber-500/20 rounded text-amber-300 text-[11px] space-y-1">
                                   <span className="font-semibold flex items-center space-x-1 text-amber-400">
                                     <AlertTriangle className="h-3 w-3" />
@@ -651,11 +653,11 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                               )}
 
                               {/* Evidence Span Traceability */}
-                              {tc.source_evidence?.length > 0 && (
+                              {Array.isArray(tc.source_evidence) && tc.source_evidence.length > 0 && (
                                 <div className="text-[11px] text-slate-500 pt-1">
                                   <span>Evidence Span: </span>
                                   <span className="italic text-slate-400">
-                                    "{tc.source_evidence[0].requirement_span}"
+                                    "{typeof tc.source_evidence[0] === 'string' ? tc.source_evidence[0] : tc.source_evidence[0]?.requirement_span || ''}"
                                   </span>
                                 </div>
                               )}
@@ -668,8 +670,8 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                 )}
 
                 <div className="mt-3 pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-500">
-                  <span>Created: {new Date(req.created_at).toLocaleDateString()}</span>
-                  <span className="text-slate-400 font-mono text-[11px]">ID: {req._id.slice(-6)}</span>
+                  <span>Created: {req.created_at ? new Date(req.created_at).toLocaleDateString() : 'Recent'}</span>
+                  <span className="text-slate-400 font-mono text-[11px]">ID: {req._id ? req._id.slice(-6) : ''}</span>
                 </div>
               </div>
             );

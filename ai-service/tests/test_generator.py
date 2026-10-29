@@ -121,3 +121,4 @@ async def test_generator_handles_auth_error():
     assert resp.status == "failed"
     assert resp.error_code == "AUTH_ERROR"
     assert "invalid API key" in resp.error_summary
+

@@ -46,3 +46,4 @@ async def test_generation_api_success():
         assert first_candidate["requirement_id"] == "req-100"
         assert first_candidate["schema_version"] == "1.0"
         assert len(first_candidate["steps"]) >= 1
+

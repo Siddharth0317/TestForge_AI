@@ -43,3 +43,4 @@
   "split_strategy": "Stratified 70% Train (72 samples), 15% Validation (18 samples), 15% Test (18 samples) with random_seed=42",
   "leakage_controls": "Exact duplicate and normalized text deduplication performed before split. Training and testing partitions are strictly isolated."
 }
+

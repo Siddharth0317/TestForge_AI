@@ -4,6 +4,7 @@ import { LoginForm } from '../components/LoginForm';
 import { ProjectsView } from '../features/projects/ProjectsView';
 import { RequirementsView } from '../features/requirements/RequirementsView';
 import { EnvironmentsView } from '../features/environments/EnvironmentsView';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ProjectItem } from '../services/projects';
 import { Layers, LogOut, User, Folder, FileText, Globe, ChevronRight } from 'lucide-react';
 
@@ -117,36 +118,38 @@ const MainShell: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-8">
-        {currentTab === 'projects' && (
-          <ProjectsView
-            onSelectProject={handleSelectProject}
-            selectedProjectId={selectedProject?._id}
-          />
-        )}
+        <ErrorBoundary fallbackTitle="Workspace Component Error" onReset={() => setCurrentTab('projects')}>
+          {currentTab === 'projects' && (
+            <ProjectsView
+              onSelectProject={handleSelectProject}
+              selectedProjectId={selectedProject?._id}
+            />
+          )}
 
-        {currentTab === 'requirements' && selectedProject && (
-          <RequirementsView project={selectedProject} />
-        )}
+          {currentTab === 'requirements' && selectedProject && (
+            <RequirementsView project={selectedProject} />
+          )}
 
-        {currentTab === 'environments' && selectedProject && (
-          <EnvironmentsView project={selectedProject} />
-        )}
+          {currentTab === 'environments' && selectedProject && (
+            <EnvironmentsView project={selectedProject} />
+          )}
 
-        {(currentTab === 'requirements' || currentTab === 'environments') && !selectedProject && (
-          <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl">
-            <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-white">No Project Selected</h3>
-            <p className="text-sm text-slate-400 mt-1 mb-4">
-              Please select or create a project first to open this workspace.
-            </p>
-            <button
-              onClick={() => setCurrentTab('projects')}
-              className="bg-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg"
-            >
-              Go to Projects
-            </button>
-          </div>
-        )}
+          {(currentTab === 'requirements' || currentTab === 'environments') && !selectedProject && (
+            <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl">
+              <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+              <h3 className="text-base font-semibold text-white">No Project Selected</h3>
+              <p className="text-sm text-slate-400 mt-1 mb-4">
+                Please select or create a project first to open this workspace.
+              </p>
+              <button
+                onClick={() => setCurrentTab('projects')}
+                className="bg-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg"
+              >
+                Go to Projects
+              </button>
+            </div>
+          )}
+        </ErrorBoundary>
       </main>
 
       <footer className="border-t border-slate-800/80 py-3.5 px-6 text-center text-xs text-slate-500">

@@ -101,3 +101,4 @@ async def test_gemini_provider_mocked_success():
         assert res.completion_tokens == 85
         assert res.total_tokens == 205
         assert "Test Login" in res.content
+

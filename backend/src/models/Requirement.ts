@@ -118,7 +118,7 @@ const RequirementSchema = new Schema<IRequirement>(
       category: { type: String },
       confidence: { type: Number },
       model_version: { type: String },
-      is_uncertain: { type: Boolean, default: false }
+      is_uncertain: { type: Boolean }
     },
     status: {
       type: String,

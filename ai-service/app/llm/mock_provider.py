@@ -228,3 +228,4 @@ class MockLLMProvider(LLMProvider):
             finish_reason="stop",
             metadata={"mock_mode": self.mode}
         )
+

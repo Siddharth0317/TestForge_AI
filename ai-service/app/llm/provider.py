@@ -80,3 +80,4 @@ class LLMProvider(ABC):
     ) -> LLMResponse:
         """Generate response text from the LLM provider."""
         pass
+

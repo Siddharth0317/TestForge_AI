@@ -14,3 +14,4 @@ class RequirementClassificationResponse(BaseModel):
     is_uncertain: bool = Field(False, description="Flag indicating uncertainty if confidence is below threshold")
     probabilities: Dict[str, float] = Field(default_factory=dict, description="Class-wise probability distribution")
     requirement_id: Optional[str] = Field(None, description="Traceability requirement ID if supplied")
+

@@ -121,3 +121,4 @@ class GenerateTestCasesResponse(BaseModel):
     duration_ms: float = 0.0
     error_code: Optional[str] = None
     error_summary: Optional[str] = None
+

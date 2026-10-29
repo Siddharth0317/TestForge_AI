@@ -113,3 +113,4 @@
   {"id": "req_107", "category": "data_integrity", "text": "Batch import operations must validate all rows and abort the batch if more than 5% fail validation."},
   {"id": "req_108", "category": "data_integrity", "text": "Event streams must guarantee at-least-once delivery with consumer deduplication keys."}
 ]
+
