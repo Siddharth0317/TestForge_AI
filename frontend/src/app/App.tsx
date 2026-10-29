@@ -3,15 +3,16 @@ import { AuthProvider, useAuth } from '../context/AuthContext';
 import { LoginForm } from '../components/LoginForm';
 import { ProjectsView } from '../features/projects/ProjectsView';
 import { RequirementsView } from '../features/requirements/RequirementsView';
+import { TestCasesView } from '../features/test-cases/TestCasesView';
 import { EnvironmentsView } from '../features/environments/EnvironmentsView';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ProjectItem } from '../services/projects';
-import { Layers, LogOut, User, Folder, FileText, Globe, ChevronRight } from 'lucide-react';
+import { Layers, LogOut, User, Folder, FileText, Globe, CheckSquare, ChevronRight } from 'lucide-react';
 
 const MainShell: React.FC = () => {
   const { user, logout } = useAuth();
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
-  const [currentTab, setCurrentTab] = useState<'projects' | 'requirements' | 'environments'>('projects');
+  const [currentTab, setCurrentTab] = useState<'projects' | 'requirements' | 'testcases' | 'environments'>('projects');
 
   const handleSelectProject = (project: ProjectItem) => {
     setSelectedProject(project);
@@ -82,6 +83,18 @@ const MainShell: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={() => setCurrentTab('testcases')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
+                    currentTab === 'testcases'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  <span>Test Cases</span>
+                </button>
+
+                <button
                   onClick={() => setCurrentTab('environments')}
                   className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                     currentTab === 'environments'
@@ -127,14 +140,21 @@ const MainShell: React.FC = () => {
           )}
 
           {currentTab === 'requirements' && selectedProject && (
-            <RequirementsView project={selectedProject} />
+            <RequirementsView
+              project={selectedProject}
+              onNavigateToTestCases={() => setCurrentTab('testcases')}
+            />
+          )}
+
+          {currentTab === 'testcases' && selectedProject && (
+            <TestCasesView project={selectedProject} />
           )}
 
           {currentTab === 'environments' && selectedProject && (
             <EnvironmentsView project={selectedProject} />
           )}
 
-          {(currentTab === 'requirements' || currentTab === 'environments') && !selectedProject && (
+          {(currentTab === 'requirements' || currentTab === 'testcases' || currentTab === 'environments') && !selectedProject && (
             <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl">
               <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" />
               <h3 className="text-base font-semibold text-white">No Project Selected</h3>

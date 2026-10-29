@@ -17,17 +17,21 @@ import {
   Wand2,
   ListOrdered,
   Layers,
-  HelpCircle
+  HelpCircle,
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import { ProjectItem } from '../../services/projects';
 import { requirementsService, RequirementItem } from '../../services/requirements';
 import { generationService, IGenerationJob, ICandidateTestCase } from '../../services/generation';
+import { importCandidates } from '../../services/testCases';
 
 interface RequirementsViewProps {
   project: ProjectItem;
+  onNavigateToTestCases?: () => void;
 }
 
-export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) => {
+export const RequirementsView: React.FC<RequirementsViewProps> = ({ project, onNavigateToTestCases }) => {
   const [requirements, setRequirements] = useState<RequirementItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -51,6 +55,8 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [expandedCandidatesId, setExpandedCandidatesId] = useState<string | null>(null);
   const [generationJobs, setGenerationJobs] = useState<Record<string, IGenerationJob>>({});
+  const [importingId, setImportingId] = useState<string | null>(null);
+  const [importNotice, setImportNotice] = useState<Record<string, string>>({});
 
   const fetchRequirements = async () => {
     setIsLoading(true);
@@ -152,6 +158,21 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
       alert(`Generation failed: ${err.message}`);
     } finally {
       setGeneratingId(null);
+    }
+  };
+
+  const handleImportCandidates = async (reqId: string, candidates: any[]) => {
+    setImportingId(reqId);
+    try {
+      const res = await importCandidates(project._id, reqId, candidates);
+      setImportNotice((prev) => ({
+        ...prev,
+        [reqId]: `Successfully imported ${res.imported_count} candidate(s) into the Test Case Explorer!`
+      }));
+    } catch (err: any) {
+      alert(`Import failed: ${err.message}`);
+    } finally {
+      setImportingId(null);
     }
   };
 
@@ -663,6 +684,45 @@ export const RequirementsView: React.FC<RequirementsViewProps> = ({ project }) =
                               )}
                             </div>
                           ))}
+                        </div>
+
+                        {/* Import Candidates into Test Case Explorer Action Bar */}
+                        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-800/80">
+                          {importNotice[req._id] ? (
+                            <div className="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg w-full justify-between">
+                              <span className="flex items-center space-x-1.5">
+                                <CheckCircle className="h-4 w-4" />
+                                <span>{importNotice[req._id]}</span>
+                              </span>
+                              {onNavigateToTestCases && (
+                                <button
+                                  onClick={onNavigateToTestCases}
+                                  className="flex items-center space-x-1 text-xs font-semibold text-emerald-300 hover:text-white underline ml-2"
+                                >
+                                  <span>Open Test Cases</span>
+                                  <ArrowRight className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleImportCandidates(req._id, latestJob.candidates)}
+                              disabled={importingId === req._id}
+                              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg flex items-center justify-center space-x-1.5 transition disabled:opacity-50"
+                            >
+                              {importingId === req._id ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <span>Validating & Importing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-3.5 w-3.5" />
+                                  <span>Import Candidates into Test Suite</span>
+                                </>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}

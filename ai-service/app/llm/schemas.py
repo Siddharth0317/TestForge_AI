@@ -32,6 +32,61 @@ class ActionType(str, Enum):
     ASSERT_URL = "assert_url"
 
 
+class AssertionType(str, Enum):
+    ASSERT_VISIBLE = "assert_visible"
+    ASSERT_NOT_VISIBLE = "assert_not_visible"
+    ASSERT_TEXT = "assert_text"
+    ASSERT_URL = "assert_url"
+
+
+class TestCaseAssertion(BaseModel):
+    type: AssertionType = Field(..., description="Assertion check type")
+    target_ref: str = Field(..., min_length=1, max_length=100, description="Named locator reference or URL")
+    expected_value: Optional[str] = Field(default=None, max_length=500, description="Expected value for text/url checks")
+    timeout_ms: int = Field(default=5000, ge=100, le=60000, description="Assertion timeout in ms")
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ValidationSeverity(str, Enum):
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
+
+
+class ValidationFinding(BaseModel):
+    rule: str
+    severity: ValidationSeverity
+    message: str
+    field: Optional[str] = None
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class TestCaseValidationResult(BaseModel):
+    test_case_id: Optional[str] = None
+    is_valid: bool
+    findings: List[ValidationFinding] = Field(default_factory=list)
+    priority_score: int = Field(default=50, ge=0, le=100)
+    priority_rationale: str = ""
+    automation_status: str = "requires_configuration"
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ValidateTestCasesRequest(BaseModel):
+    requirement_text: str = Field(..., min_length=1)
+    candidate_test_cases: List[Dict[str, Any]] = Field(..., min_length=1)
+
+    model_config = ConfigDict(extra="ignore")
+
+
+class ValidateTestCasesResponse(BaseModel):
+    validation_results: List[TestCaseValidationResult] = Field(default_factory=list)
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class Priority(str, Enum):
     CRITICAL = "critical"
     HIGH = "high"
@@ -79,6 +134,7 @@ class CandidateTestCase(BaseModel):
     test_data: Dict[str, Any] = Field(default_factory=dict, description="Test data parameters without raw secrets")
     steps: List[TestStep] = Field(..., min_length=1, description="Ordered test steps")
     expected_result: str = Field(..., min_length=3, max_length=1000, description="Verifiable outcome")
+    assertions: List[TestCaseAssertion] = Field(default_factory=list, description="Explicit verification assertions")
     priority: Priority = Field(default=Priority.MEDIUM, description="Execution priority")
     automation_status: AutomationStatus = Field(default=AutomationStatus.REQUIRES_CONFIGURATION)
     assumptions: List[str] = Field(default_factory=list, description="Unsupported assumptions made by the model")

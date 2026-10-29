@@ -7,6 +7,7 @@ from app.core.security import verify_internal_key
 from app.api.v1.requirements import router as requirements_router
 from app.api.v1.classifier import router as classifier_router
 from app.api.v1.generation import router as generation_router
+from app.api.v1.validation import router as validation_router
 
 app = FastAPI(
     title="TestForge AI Service",
@@ -18,6 +19,7 @@ app = FastAPI(
 app.include_router(requirements_router)
 app.include_router(classifier_router)
 app.include_router(generation_router, prefix="/internal/v1")
+app.include_router(validation_router, prefix="/internal/v1")
 
 # CORS middleware for local development
 app.add_middleware(

@@ -12,6 +12,7 @@ import { projectsRouter } from './modules/projects/projects.router';
 import { requirementsRouter } from './modules/requirements/requirements.router';
 import { environmentsRouter } from './modules/environments/environments.router';
 import { generationRouter } from './modules/generation/generation.router';
+import { testCasesRouter } from './modules/test-cases/test-cases.router';
 
 export function createApp(): Express {
   const app: Express = express();
@@ -82,6 +83,7 @@ export function createApp(): Express {
   app.use('/api/v1', requirementsRouter);
   app.use('/api/v1', environmentsRouter);
   app.use('/api/v1', generationRouter);
+  app.use('/api/v1', testCasesRouter);
 
   // 404 handler for unknown routes
   app.use((req: Request, res: Response) => {
