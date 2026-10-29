@@ -6,6 +6,35 @@ All notable, owner-approved product requirement and implementation changes are r
 
 ## Change History
 
+### 2026-10-29 — Phase 2 Core Backend, Database, and Application Shell Complete
+
+- **Change ID:** `CHG-003`
+- **Type:** `Core Backend API & Database Persistence`
+- **Requested by:** Project Owner
+- **Approval:** `APPROVED`
+- **Reason:** Implement Phase 2 deliverables per `Spec.md` Section 17 and `Antigravity_Prompting_Plan.md`.
+- **Previous behavior/requirement:** Monorepo development foundation without persistence or business entities (Phase 1).
+- **New behavior/requirement:**
+  - Implemented Mongoose data models with validation and compound indexes: `User`, `Project`, `Requirement`, and `TargetEnvironment`.
+  - Implemented secure password hashing via bcrypt and JWT authentication utilities.
+  - Implemented server-side RBAC and project authorization middleware (`requireProjectRole`) enforcing cross-project isolation.
+  - Created REST routers for `/api/v1/auth`, `/api/v1/projects`, `/api/v1/projects/:projectId/requirements`, `/api/v1/requirements/:requirementId`, and `/api/v1/projects/:projectId/environments`.
+  - Implemented requirement versioning: editing a requirement increments its `version` counter and resets status to `draft`.
+  - Implemented automated database seed script in `backend/src/scripts/seed.ts`.
+  - Implemented frontend real API client (`services/api.ts`, `services/auth.ts`, `services/projects.ts`, `services/requirements.ts`), authentication context (`AuthContext.tsx`), and views (`LoginForm`, `ProjectsView`, `RequirementsView`).
+  - Added test suites: 18 backend tests passing with in-memory MongoDB, 9 frontend tests passing with Vitest.
+- **Spec.md sections updated:** Section 7, Section 8, Section 12, Section 17 (Phase 2), Section 27.
+- **Decision IDs:** `DEC-002`, `DEC-005`
+- **Affected phase(s):** Phase 2 (completed at gate), ready for Phase 3.
+- **Verification:**
+  - `npm run typecheck`: 0 errors.
+  - `npm run test:backend`: 18/18 passing (Vitest / Supertest / Mongoose).
+  - `npm run test:frontend`: 9/9 passing (Vitest / Testing Library).
+  - `pytest ai-service`: 4/4 passing.
+  - `pytest automation`: 4/4 passing.
+
+---
+
 ### 2026-10-29 — Phase 1 Monorepo & Development Foundation Complete
 
 - **Change ID:** `CHG-002`
@@ -14,27 +43,9 @@ All notable, owner-approved product requirement and implementation changes are r
 - **Approval:** `APPROVED`
 - **Reason:** Implement Phase 1 deliverables per `Spec.md` Section 17 and `Antigravity_Prompting_Plan.md`.
 - **Previous behavior/requirement:** Architecture and planning documents only (Phase 0).
-- **New behavior/requirement:**
-  - Initialized clean Git repository and monorepo structure with npm workspaces (`frontend`, `backend`).
-  - Created `.gitignore` and `.env.example` templates with zero real secrets.
-  - Implemented Core Backend API skeleton with Zod configuration validation, Pino structured logging, request ID propagation, helmet/CORS, and `/health` & `/ready` probes.
-  - Implemented React 18 + Vite + TypeScript frontend shell with Tailwind CSS and Vitest test setup.
-  - Implemented Python FastAPI AI Service skeleton with pydantic-settings, internal API key security header, and `/health` & `/ready` probes.
-  - Implemented Python Automation Worker safety module with target host allowlist filtering and SSRF / cloud metadata blocking.
-  - Created local CI test fixture application (`automation/fixture_app/index.html`).
-  - Created `docker-compose.yml` and Dockerfiles in `infrastructure/docker/`.
-  - Created GitHub Actions CI pipeline (`.github/workflows/ci.yml`).
-  - Created comprehensive `README.md` setup and test guide.
-- **Spec.md sections updated:** Section 17 (Phase 1), Section 27.
+- **New behavior/requirement:** Clean monorepo scaffold, pinned dependencies, health probes, Docker Compose, CI pipeline.
 - **Decision IDs:** `DEC-001`, `DEC-002`, `DEC-003`, `DEC-005`
-- **Affected phase(s):** Phase 1 (completed at gate), ready for Phase 2.
-- **Affected APIs/schemas/data:** Health and readiness probe contracts, environment schemas.
-- **Verification:**
-  - `npm run typecheck`: 0 errors.
-  - `npm run test:backend`: 4/4 passing (Jest / Supertest).
-  - `npm run test:frontend`: 2/2 passing (Vitest / React Testing Library).
-  - `ai-service pytest`: 4/4 passing (FastAPI AsyncClient).
-  - `automation pytest`: 4/4 passing (Allowlist & security tests).
+- **Affected phase(s):** Phase 1.
 
 ---
 
@@ -45,15 +56,5 @@ All notable, owner-approved product requirement and implementation changes are r
 - **Requested by:** Project Owner
 - **Approval:** `APPROVED`
 - **Reason:** Completed Phase 0 requirements per `Spec.md` Section 17 and `Antigravity_Prompting_Plan.md`.
-- **Previous behavior/requirement:** Uninitialized project state with proposal baselines.
-- **New behavior/requirement:**
-  - Completed read-only review of legacy project `C:\Projects\AutoHealQA` in `LEGACY_REVIEW.md`. Formalized "Reuse None" decision.
-  - Authored authoritative technical specifications: `docs/architecture.md`, `docs/api-contracts.md`, `docs/data-models.md`, `docs/security.md`, and `docs/evaluation-plan.md`.
-  - Approved initial architecture decisions DEC-001 through DEC-005 in `DECISIONS.md`.
-  - Updated `PHASE_CHECKLIST.md` and `PROJECT_STATE.md`.
-- **Spec.md sections updated:** Preserved all original Sections 0–27.
 - **Decision IDs:** `DEC-001`, `DEC-002`, `DEC-003`, `DEC-004`, `DEC-005`
 - **Affected phase(s):** Phase 0.
-- **Affected APIs/schemas/data:** Established standard `/api/v1` and `/internal/v1` API contracts, Mongoose schemas, and Pydantic validation contracts.
-- **Security/privacy/reliability impact:** Established RBAC authorization model, strict host allowlists, secret isolation, and threat mitigation models.
-- **Verification:** Read-only inspection of `AutoHealQA` verified; documentation files generated and validated for mutual consistency.

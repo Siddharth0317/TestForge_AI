@@ -10,6 +10,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   FRONTEND_ORIGIN: z.string().default('http://localhost:5173'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  JWT_SECRET: z.string().min(8).default('change-this-to-a-secure-random-secret-at-least-32-chars-long'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
   INTERNAL_SERVICE_KEY: z.string().default('replace-with-internal-service-secret-token'),
   AI_SERVICE_URL: z.string().url().default('http://localhost:8000'),
   MONGODB_URI: z.string().default('mongodb://localhost:27017/testforge_ai')
@@ -23,4 +25,3 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
-

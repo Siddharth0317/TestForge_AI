@@ -2,21 +2,20 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { App } from '../src/app/App';
 
-describe('Frontend Shell Smoke Test', () => {
-  it('renders application header and title', () => {
+describe('Frontend Application Shell', () => {
+  it('renders sign-in form when unauthenticated', () => {
     render(<App />);
 
-    expect(screen.getByText('TestForge AI')).toBeInTheDocument();
-    expect(screen.getByText('From Requirements to Verified Tests')).toBeInTheDocument();
-    expect(screen.getByText('Foundation Ready')).toBeInTheDocument();
+    expect(screen.getByText('Sign In to TestForge AI')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('user@testforge.local')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('renders core architectural feature cards', () => {
+  it('renders quick-fill demo account shortcuts', () => {
     render(<App />);
 
-    expect(screen.getByText('Deterministic Gates')).toBeInTheDocument();
-    expect(screen.getByText('Hybrid AI & ML')).toBeInTheDocument();
-    expect(screen.getByText('Controlled Execution')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^admin$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^qa engineer$/i })).toBeInTheDocument();
   });
 });
-

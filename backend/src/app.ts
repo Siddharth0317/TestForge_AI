@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import { env } from './config/env';
 import { requestIdMiddleware } from './middleware/requestId';
 import { errorHandler } from './middleware/errorHandler';
+import { authRouter } from './modules/auth/auth.router';
+import { projectsRouter } from './modules/projects/projects.router';
+import { requirementsRouter } from './modules/requirements/requirements.router';
+import { environmentsRouter } from './modules/environments/environments.router';
 
 export function createApp(): Express {
   const app: Express = express();
@@ -50,6 +54,12 @@ export function createApp(): Express {
     });
   });
 
+  // Mount API v1 Routers
+  app.use('/api/v1/auth', authRouter);
+  app.use('/api/v1/projects', projectsRouter);
+  app.use('/api/v1', requirementsRouter);
+  app.use('/api/v1', environmentsRouter);
+
   // 404 handler for unknown routes
   app.use((req: Request, res: Response) => {
     res.status(404).json({
@@ -68,4 +78,3 @@ export function createApp(): Express {
 
   return app;
 }
-

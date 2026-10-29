@@ -48,14 +48,14 @@
 
 | Criterion | Status | Evidence path / test | Verified date / commit | Unresolved issue / next action |
 |---|---|---|---|---|
-| Approved data models, validation, and indexes implemented | NOT STARTED | | | |
-| Migration/seed strategy documented and tested where applicable | NOT STARTED | | | |
-| API error format and request/correlation IDs implemented | NOT STARTED | | | |
-| Real API persistence read/write path verified | NOT STARTED | | | |
-| Authentication and project-level authorization foundations verified | NOT STARTED | | | |
-| Frontend calls real API endpoints for in-scope functionality | NOT STARTED | | | |
-| Loading, empty, validation, and error states implemented | NOT STARTED | | | |
-| Relevant unit and integration tests pass | NOT STARTED | | | |
+| Approved data models, validation, and indexes implemented | **PASS** | `backend/src/models/User.ts`, `Project.ts`, `Requirement.ts`, `TargetEnvironment.ts` | 2026-10-29 | Mongoose models with validation & compound indexes. |
+| Migration/seed strategy documented and tested where applicable | **PASS** | [`backend/src/scripts/seed.ts`](./backend/src/scripts/seed.ts) | 2026-10-29 | Seeds admin, qa, viewer users, demo project, target env. |
+| API error format and request/correlation IDs implemented | **PASS** | `backend/src/middleware/errorHandler.ts`, `requestId.ts` | 2026-10-29 | Unified error envelope verified across 400, 401, 403, 404, 500. |
+| Real API persistence read/write path verified | **PASS** | `backend/tests/projects.test.ts`, `requirements.test.ts` | 2026-10-29 | 18 passing backend integration tests with Mongoose. |
+| Authentication and project-level authorization foundations verified | **PASS** | `backend/src/middleware/auth.ts`, `backend/tests/auth.test.ts` | 2026-10-29 | JWT authentication, bcrypt hashing, cross-project isolation. |
+| Frontend calls real API endpoints for in-scope functionality | **PASS** | `frontend/src/services/api.ts`, `auth.ts`, `projects.ts`, `requirements.ts` | 2026-10-29 | Real Fetch API client attached to backend endpoints. |
+| Loading, empty, validation, and error states implemented | **PASS** | `frontend/src/features/projects/ProjectsView.tsx`, `RequirementsView.tsx` | 2026-10-29 | Tested and confirmed in component suites. |
+| Relevant unit and integration tests pass | **PASS** | `npm run test:backend` (18 passed), `npm run test:frontend` (9 passed) | 2026-10-29 | 100% passing test suites across frontend & backend. |
 
 ---
 
@@ -185,8 +185,8 @@
 | Phase | Overall Status | Reviewer / Approval | Date / Checkpoint | Blocking Criteria |
 |---|---|---|---|---|
 | 0 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
-| 1 | **AT GATE (Awaiting Owner Review)** | Antigravity (Lead Architect) | 2026-10-29 | None. All Phase 1 criteria verified. |
-| 2 | NOT STARTED | | | Dependent on Phase 1 approval |
+| 1 | **PASS (Approved)** | Project Owner | 2026-10-29 | None. |
+| 2 | **AT GATE (Awaiting Owner Review)** | Antigravity (Lead Architect) | 2026-10-29 | None. All Phase 2 criteria verified. |
 | 3 | NOT STARTED | | | Dependent on Phase 2 approval |
 | 4 | NOT STARTED | | | Dependent on Phase 3 approval |
 | 5 | NOT STARTED | | | Dependent on Phase 4 approval |

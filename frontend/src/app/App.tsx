@@ -1,79 +1,148 @@
-import React from 'react';
-import { ShieldCheck, Cpu, PlayCircle, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from '../context/AuthContext';
+import { LoginForm } from '../components/LoginForm';
+import { ProjectsView } from '../features/projects/ProjectsView';
+import { RequirementsView } from '../features/requirements/RequirementsView';
+import { ProjectItem } from '../services/projects';
+import { Layers, LogOut, User, Folder, FileText, ChevronRight } from 'lucide-react';
 
-export const App: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+const MainShell: React.FC = () => {
+  const { user, logout } = useAuth();
+  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
+  const [currentTab, setCurrentTab] = useState<'projects' | 'requirements'>('projects');
+
+  const handleSelectProject = (project: ProjectItem) => {
+    setSelectedProject(project);
+    setCurrentTab('requirements');
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6">
+        <header className="flex items-center space-x-3 max-w-5xl mx-auto w-full py-4">
           <Layers className="h-6 w-6 text-indigo-400" />
-          <span className="font-bold text-xl tracking-tight text-white">TestForge AI</span>
-          <span className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-0.5 rounded border border-indigo-500/20 font-medium">
-            v1.0.0 Foundation
+          <span className="font-bold text-xl text-white">TestForge AI</span>
+          <span className="text-xs bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 font-medium">
+            Phase 2 Core API & Application Shell
           </span>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center py-10">
+          <LoginForm />
+        </main>
+
+        <footer className="text-center text-xs text-slate-500 py-4">
+          TestForge AI — From Requirements to Verified Tests
+        </footer>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      {/* Top Application Header */}
+      <header className="border-b border-slate-800 bg-slate-900/70 backdrop-blur px-6 py-3.5 flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setCurrentTab('projects')}>
+            <Layers className="h-6 w-6 text-indigo-400" />
+            <span className="font-bold text-lg text-white tracking-tight">TestForge AI</span>
+          </div>
+
+          <nav className="flex items-center space-x-1 text-sm">
+            <button
+              onClick={() => setCurrentTab('projects')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
+                currentTab === 'projects'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Folder className="h-4 w-4" />
+              <span>Projects</span>
+            </button>
+
+            {selectedProject && (
+              <>
+                <ChevronRight className="h-4 w-4 text-slate-600" />
+                <button
+                  onClick={() => setCurrentTab('requirements')}
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
+                    currentTab === 'requirements'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Requirement Studio</span>
+                  <span className="text-xs bg-indigo-950 px-1.5 py-0.2 rounded text-indigo-300 ml-1">
+                    {selectedProject.name}
+                  </span>
+                </button>
+              </>
+            )}
+          </nav>
         </div>
-        <div className="flex items-center space-x-4 text-sm text-slate-400">
-          <span className="flex items-center space-x-1.5">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Foundation Ready</span>
-          </span>
+
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">
+            <User className="h-4 w-4 text-slate-400" />
+            <span className="text-xs text-slate-200 font-medium">{user.email}</span>
+            <span className="text-xs uppercase bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-semibold text-[10px]">
+              {user.role}
+            </span>
+          </div>
+
+          <button
+            onClick={logout}
+            title="Log Out"
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </header>
 
-      <main className="flex-1 p-8 max-w-6xl mx-auto w-full">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            From Requirements to Verified Tests
-          </h1>
-          <p className="text-slate-400 mt-2 text-base max-w-2xl">
-            An intelligent NLP- and LLM-powered platform for deterministic test case generation, 
-            quality evaluation, and controlled browser automation.
-          </p>
-        </div>
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-8">
+        {currentTab === 'projects' && (
+          <ProjectsView
+            onSelectProject={handleSelectProject}
+            selectedProjectId={selectedProject?._id}
+          />
+        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <h2 className="font-semibold text-lg text-white">Deterministic Gates</h2>
-            </div>
-            <p className="text-sm text-slate-400">
-              Dual Zod & Pydantic validation, explicit requirement traceability, and strict action allowlists.
-            </p>
-          </div>
+        {currentTab === 'requirements' && selectedProject && (
+          <RequirementsView project={selectedProject} />
+        )}
 
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-                <Cpu className="h-5 w-5" />
-              </div>
-              <h2 className="font-semibold text-lg text-white">Hybrid AI & ML</h2>
-            </div>
-            <p className="text-sm text-slate-400">
-              Linguistic feature extraction with spaCy, scikit-learn requirement classification, and structured LLM generation.
+        {currentTab === 'requirements' && !selectedProject && (
+          <div className="text-center py-12 bg-slate-900 border border-slate-800 rounded-xl">
+            <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white">No Project Selected</h3>
+            <p className="text-sm text-slate-400 mt-1 mb-4">
+              Please select or create a project first to open Requirement Studio.
             </p>
+            <button
+              onClick={() => setCurrentTab('projects')}
+              className="bg-indigo-600 text-white text-xs font-semibold px-4 py-2 rounded-lg"
+            >
+              Go to Projects
+            </button>
           </div>
-
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400">
-                <PlayCircle className="h-5 w-5" />
-              </div>
-              <h2 className="font-semibold text-lg text-white">Controlled Execution</h2>
-            </div>
-            <p className="text-sm text-slate-400">
-              Restricted Selenium browser automation against authorized target applications and CI fixtures.
-            </p>
-          </div>
-        </div>
+        )}
       </main>
 
-      <footer className="border-t border-slate-800 py-4 px-6 text-center text-xs text-slate-500">
-        TestForge AI — Greenfield Monorepo Foundation (Phase 1 Baseline)
+      <footer className="border-t border-slate-800/80 py-3.5 px-6 text-center text-xs text-slate-500">
+        TestForge AI — Core API & Persistence Foundation Verified (Phase 2 Baseline)
       </footer>
     </div>
   );
 };
 
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <MainShell />
+    </AuthProvider>
+  );
+};
